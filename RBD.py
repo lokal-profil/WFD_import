@@ -49,8 +49,7 @@ class RBD():
         self.dataset_q = 'Q27074294'
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
-        self.area_unit = 'http://www.wikidata.org/entity/Q712226'
-        self.area_error = 1  # until I figure something better out
+        self.area_unit = pywikibot.ItemPage(repo, 'Q712226')
 
         self.langs = ('en', 'sv')  # languages for which we require translations
         self.countries = mappings['countryCode']
@@ -266,8 +265,7 @@ class RBD():
         #   P2046: rbdArea + self.area_unit (can I set unknown accuracy)
         protoclaims[u'P2046'] = WD.Statement(
             pywikibot.WbQuantity(entry_data[u'rbdArea'],
-                                 error=self.area_error,
-                                 entity=self.area_unit))
+                                 unit=self.area_unit, site=self.wd.repo)
         return protoclaims
 
     def commit_labels(self, labels, item):

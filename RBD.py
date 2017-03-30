@@ -18,6 +18,7 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 import wikidataStuff.wdqsLookup as wdqsLookup
 from wikidataStuff.WikidataStuff import WikidataStuff as WD
+import wfd_helpers
 
 parameter_help = u"""\
 RBDbot options (may be omitted):
@@ -352,32 +353,6 @@ class RBD():
         )
         return ref
 
-    @staticmethod
-    def load_xml_url_data(url):
-        """Load the data from an url to an xml file.
-
-        @todo: dump to a local json file (if wanted)
-        """
-        import requests
-        import xmltodict
-        import datetime
-        r = requests.get(url)
-        data = xmltodict.parse(
-            r.text.encode(r.encoding),
-            encoding='utf-8').get('RBDSUCA')
-        data['source_url'] = url
-        data['retrieval_date'] = datetime.date.today().isoformat()
-        return data
-
-    @staticmethod
-    def load_data(in_file):
-        """Load the data from the in_file.
-
-        Needs to be adapted if the fileformat changes
-        """
-        if in_file.partition('://')[0] in ('http', 'https'):
-            return RBD.load_xml_url_data(in_file)
-        return helpers.load_json_file(in_file)
 
     @staticmethod
     def main(*args):
@@ -407,7 +382,7 @@ class RBD():
 
         # load mappings and initialise RBD object
         mappings = helpers.load_json_file(mappings, force_path)
-        data = RBD.load_data(in_file)
+        data = wfd_helpers.load_data(in_file, key='RBDSUCA')
         rbd = RBD(mappings, new=new, cutoff=cutoff)
 
         rbd.process_all_rbd(data)

@@ -17,7 +17,7 @@ usage:
 import pywikibot
 import wikidataStuff.helpers as helpers
 import wikidataStuff.wdqsLookup as wdqsLookup
-from wikidataStuff.WikidataStuff import WikidataStuff as WD
+from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 import wfd_helpers
 
 parameter_help = u"""\
@@ -34,7 +34,7 @@ Can also handle any pywikibot options. Most importantly:
 -help              output all available options
 """
 docuReplacements = {'&params;': parameter_help}
-EDIT_SUMMARY = u'import using #WFDdata'
+EDIT_SUMMARY = u'importing #RBD using data from #WFD'
 
 
 class RBD():
@@ -43,19 +43,19 @@ class RBD():
     def __init__(self, mappings, new=False, cutoff=None):
         """Initialise the bot."""
         self.repo = pywikibot.Site().data_repository()
-        self.wd = WD(self.repo, EDIT_SUMMARY)
+        self.wd = WdS(self.repo, EDIT_SUMMARY)
         self.new = new
         self.cutoff = cutoff
 
         self.dataset_q = 'Q27074294'
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
-        self.area_unit = pywikibot.ItemPage(repo, 'Q712226')
+        self.area_unit = pywikibot.ItemPage(self.repo, 'Q712226')
 
-        self.langs = ('en', 'sv')  # languages for which we require translations
+        self.langs = ('en', 'sv')  # languages which require translations
         self.countries = mappings['countryCode']
         self.competent_authorities = mappings['CompetentAuthority']
-        self.descriptions = mappings['descriptions']
+        self.descriptions = mappings['descriptions']['RBD']
         self.rbd_id_items = self.load_existing_rbd()
 
     def load_existing_rbd(self):
@@ -131,7 +131,7 @@ class RBD():
 
         :param country: the country code as a string
         :param data: dict of all the rbds in the country with euRBDCode as keys
-        :param reference: WD.Reference object to be associated to all claims
+        :param reference: WdS.Reference object to be associated to all claims
         """
         # check if CA in self.competent_authorities else raise error
         self.check_country(country)
@@ -225,7 +225,8 @@ class RBD():
 
         descriptions = {}
         for lang in self.langs:
-            desc = description_type.get(lang) % self.countries.get(country).get(lang)
+            desc = description_type.get(lang).format(
+                country=self.countries.get(country).get(lang))
             descriptions[lang] = {'language': lang, 'value': desc}
         return descriptions
 
@@ -250,23 +251,23 @@ class RBD():
         """
         protoclaims = {}
         #   P31: self.rbd_q
-        protoclaims[u'P31'] = WD.Statement(
+        protoclaims[u'P31'] = WdS.Statement(
             self.wd.QtoItemPage(self.rbd_q))
         #   self.eu_rbd_p: euRBDCode
-        protoclaims[self.eu_rbd_p] = WD.Statement(
+        protoclaims[self.eu_rbd_p] = WdS.Statement(
             entry_data[u'euRBDCode'])
         #   P17: country (via self.countries)
-        protoclaims[u'P17'] = WD.Statement(
+        protoclaims[u'P17'] = WdS.Statement(
             self.wd.QtoItemPage(country_q))
         #   P137: primeCompetentAuthority (via self.competent_authorities)
-        protoclaims[u'P137'] = WD.Statement(
+        protoclaims[u'P137'] = WdS.Statement(
             self.wd.QtoItemPage(
                 self.competent_authorities[
                     entry_data[u'primeCompetentAuthority']]))
         #   P2046: rbdArea + self.area_unit (can I set unknown accuracy)
-        protoclaims[u'P2046'] = WD.Statement(
+        protoclaims[u'P2046'] = WdS.Statement(
             pywikibot.WbQuantity(entry_data[u'rbdArea'],
-                                 unit=self.area_unit, site=self.wd.repo)
+                                 unit=self.area_unit, site=self.wd.repo))
         return protoclaims
 
     def commit_labels(self, labels, item):
@@ -287,7 +288,7 @@ class RBD():
             key: Prop number
             val: Statement|list of Statements
         :param item: the target entity
-        :param ref: WD.Reference
+        :param ref: WdS.Reference
         """
         for pc_prop, pc_value in protoclaims.iteritems():
             if pc_value:
@@ -318,7 +319,8 @@ class RBD():
 
         # Find the country code in mappings (skip if not found)
         country = data.get('countryCode')
-        # language = data.get('@language') # per schema "Code of the language of the file" but it isn't
+        # per schema "Code of the language of the file" but it isn't
+        # language = data.get('@language')
 
         # Send rbd data for the country onwards
         self.process_country_rbd(
@@ -334,7 +336,7 @@ class RBD():
         * P813: Retrieval date <current date>
         """
         creation_date = helpers.iso_to_WbTime(data['@creationDate'])
-        ref = WD.Reference(
+        ref = WdS.Reference(
             source_test=[
                 self.wd.make_simple_claim(
                     'P248',
@@ -352,7 +354,6 @@ class RBD():
             ]
         )
         return ref
-
 
     @staticmethod
     def main(*args):

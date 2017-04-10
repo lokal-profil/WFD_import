@@ -28,14 +28,38 @@
         "FILAP": "Q11874605",
         "FIAHV": "Q2625260"
     },
+    "surfaceWaterBodyCategory": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/surfaceWaterBodyCategory",
+        "RW": "",
+        "LW": "",
+        "TW": "",
+        "CW": "",
+        "TeW": ""
+    },
+    "swSignificantImpactType": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swSignificantImpactType",
+        "ACID": "Q10501532",
+        "CHEM": "Q28854976",
+        "HHYC": "Q28855260",
+        "HMOC": "Q28855259",
+        "LITT": "Q1780867",
+        "LOWT": "Q28854973",
+        "MICR": "Q28854968",
+        "NUTR": "Q12203192",
+        "ORGA": "Q28854984",
+        "SALI": "Q2002254",
+        "TEMP": "Q2914309"
+    },
     "descriptions": {
-        "national": {
-            "en": "river basin district in %s",
-            "sv": "vattendistrikt i %s"
-        },
-        "international": {
-            "en": "international river basin district in %s",
-            "sv": "internationellt vattendistrikt i %s"
+        "RBD": {
+            "national": {
+                "en": "river basin district in {country}",
+                "sv": "vattendistrikt i {country}"
+            },
+            "international": {
+                "en": "international river basin district in {country}",
+                "sv": "internationellt vattendistrikt i {country}"
+            }
         }
     }
 }

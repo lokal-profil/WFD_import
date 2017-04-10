@@ -15,10 +15,12 @@ usage:
 &params;
 """
 import pywikibot
+
 import wikidataStuff.helpers as helpers
 import wikidataStuff.wdqsLookup as wdqsLookup
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
-import wfd_helpers
+
+from WFDBase import WfdBot
 
 parameter_help = u"""\
 RBDbot options (may be omitted):
@@ -37,17 +39,14 @@ docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = u'importing #RBD using data from #WFD'
 
 
-class RBD():
+class RbdBot(WfdBot):
     """Bot to enrich/create info on Wikidata for RBD objects."""
 
     def __init__(self, mappings, new=False, cutoff=None):
         """Initialise the bot."""
-        self.repo = pywikibot.Site().data_repository()
-        self.wd = WdS(self.repo, EDIT_SUMMARY)
-        self.new = new
-        self.cutoff = cutoff
-
+        super(RbdBot, self).__init__(mappings, new, cutoff, EDIT_SUMMARY)
         self.dataset_q = 'Q27074294'
+
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
         self.area_unit = pywikibot.ItemPage(self.repo, 'Q712226')
@@ -126,12 +125,11 @@ class RBD():
                                   "for country %s before continuing: %s"
                                   % (country, ', '.join(diff)))
 
-    def process_country_rbd(self, country, data, reference=None):
+    def process_country_rbd(self, country, data):
         """Handle the RBDs of a single country.
 
         :param country: the country code as a string
         :param data: dict of all the rbds in the country with euRBDCode as keys
-        :param reference: WdS.Reference object to be associated to all claims
         """
         # check if CA in self.competent_authorities else raise error
         self.check_country(country)
@@ -157,7 +155,7 @@ class RBD():
             protoclaims = self.make_protoclaims(
                 entry_data, self.countries.get(country).get('qId'))
             self.commit_labels(labels, item)
-            self.commit_claims(protoclaims, item, reference)
+            self.commit_claims(protoclaims, item)
 
             # increment counter
             count += 1
@@ -270,42 +268,6 @@ class RBD():
                                  unit=self.area_unit, site=self.wd.repo))
         return protoclaims
 
-    def commit_labels(self, labels, item):
-        """Add labels and aliases to item."""
-        if not labels:
-            return
-        for lang, data in labels.iteritems():
-            values = helpers.listify(data['value'])
-            for value in values:
-                self.wd.addLabelOrAlias(lang, value, item,
-                                        caseSensitive=False)
-
-    def commit_claims(self, protoclaims, item, ref):
-        """
-        Add each claim (if new) and source it.
-
-        :param protoclaims: a dict of claims with
-            key: Prop number
-            val: Statement|list of Statements
-        :param item: the target entity
-        :param ref: WdS.Reference
-        """
-        for pc_prop, pc_value in protoclaims.iteritems():
-            if pc_value:
-                if isinstance(pc_value, list):
-                    pc_value = set(pc_value)  # eliminate potential duplicates
-                    for val in pc_value:
-                        # check if None or a Statement(None)
-                        if (val is not None) and (not val.isNone()):
-                            self.wd.addNewClaim(
-                                pc_prop, val, item, ref)
-                            # reload item so that next call is aware of changes
-                            item = self.wd.QtoItemPage(item.title())
-                            item.exists()
-                elif not pc_value.isNone():
-                    self.wd.addNewClaim(
-                        pc_prop, pc_value, item, ref)
-
     def process_all_rbd(self, data):
         """Handle every single RBD in a datafile.
 
@@ -315,7 +277,7 @@ class RBD():
         self.check_all_descriptions()
 
         # Make a Reference (or possibly one per country)
-        ref = self.make_ref(data)
+        self.ref = self.make_ref(data)
 
         # Find the country code in mappings (skip if not found)
         country = data.get('countryCode')
@@ -324,36 +286,7 @@ class RBD():
 
         # Send rbd data for the country onwards
         self.process_country_rbd(
-            country, helpers.listify(data.get('RBD')), ref)
-
-    def make_ref(self, data):
-        """Make a Reference object for the dataset.
-
-        Contains 4 parts:
-        * P248: Stated in <the WFD2016 dataset>
-        * P577: Publication date <from creation date of the document>
-        * P854: Reference url <using the input url>
-        * P813: Retrieval date <current date>
-        """
-        creation_date = helpers.iso_to_WbTime(data['@creationDate'])
-        ref = WdS.Reference(
-            source_test=[
-                self.wd.make_simple_claim(
-                    'P248',
-                    self.wd.QtoItemPage(self.dataset_q)),
-                self.wd.make_simple_claim(
-                    'P854',
-                    data['source_url'])],
-            source_notest=[
-                self.wd.make_simple_claim(
-                    'P577',
-                    creation_date),
-                self.wd.make_simple_claim(
-                    'P813',
-                    helpers.today_as_WbTime())
-            ]
-        )
-        return ref
+            country, helpers.listify(data.get('RBD')))
 
     @staticmethod
     def main(*args):
@@ -383,11 +316,11 @@ class RBD():
 
         # load mappings and initialise RBD object
         mappings = helpers.load_json_file(mappings, force_path)
-        data = wfd_helpers.load_data(in_file, key='RBDSUCA')
-        rbd = RBD(mappings, new=new, cutoff=cutoff)
+        data = WfdBot.load_data(in_file, key='RBDSUCA')
+        rbd = RbdBot(mappings, new=new, cutoff=cutoff)
 
         rbd.process_all_rbd(data)
 
 
 if __name__ == "__main__":
-    RBD.main()
+    RbdBot.main()

@@ -43,10 +43,9 @@ EDIT_SUMMARY = 'importing #RBD using data from #WFD'
 class RbdBot(WfdBot):
     """Bot to enrich/create info on Wikidata for RBD objects."""
 
-    def __init__(self, mappings, new=False, cutoff=None):
+    def __init__(self, mappings, year, new=False, cutoff=None):
         """Initialise the RbdBot."""
-        super(RbdBot, self).__init__(mappings, new, cutoff, EDIT_SUMMARY)
-        self.dataset_q = 'Q27074294'
+        super(RbdBot, self).__init__(mappings, year, new, cutoff, EDIT_SUMMARY)
 
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
@@ -275,16 +274,19 @@ class RbdBot(WfdBot):
 
         @todo: Adapt to multi country data
         """
+        wfd_year_datasets = self.mappings.get('dataset').get(self.year)
+
         # Check that all descriptions are present
         self.check_all_descriptions()
-
-        # Make a Reference (or possibly one per country)
-        self.ref = self.make_ref(data)
 
         # Find the country code in mappings (skip if not found)
         country = data.get('countryCode')
         # per schema "Code of the language of the file" but it isn't
         # language = data.get('@language')
+
+        # Make a Reference (or possibly one per country)
+        self.dataset_q = wfd_year_datasets[country]
+        self.ref = self.make_ref(data)
 
         # Send rbd data for the country onwards
         self.process_country_rbd(
@@ -298,6 +300,7 @@ class RbdBot(WfdBot):
         in_file = None
         new = False
         cutoff = None
+        year = '2016'
 
         # Load pywikibot args and handle local args
         for arg in pywikibot.handle_args(args):
@@ -309,6 +312,8 @@ class RbdBot(WfdBot):
                 force_path = None
             elif option == '-new':
                 new = True
+            elif option == '-year':
+                year = value
             elif option == '-cutoff':
                 cutoff = int(value)
 
@@ -319,7 +324,7 @@ class RbdBot(WfdBot):
         # load mappings and initialise RBD object
         mappings = helpers.load_json_file(mappings, force_path)
         data = WfdBot.load_data(in_file, key='RBDSUCA')
-        rbd = RbdBot(mappings, new=new, cutoff=cutoff)
+        rbd = RbdBot(mappings, year, new=new, cutoff=cutoff)
 
         rbd.process_all_rbd(data)
 

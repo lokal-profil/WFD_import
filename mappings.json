@@ -11,6 +11,12 @@
             "sv": "Sverige"
         }
     },
+    "dataset": {
+        "@meta": "The item corresponding to the country wfd dataset for that year",
+        "2016": {
+            "FI": "Q29380097"
+        }
+    },
     "languageCode": {
         "fin": "fi",
         "swe": "sv"

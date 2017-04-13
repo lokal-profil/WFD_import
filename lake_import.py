@@ -42,7 +42,7 @@ EDIT_SUMMARY = 'importing #SWB using data from #WFD'
 class LakeBot(WfdBot):
     """Bot to enrich/create info on Wikidata for lake objects."""
 
-    def __init__(self, mappings, year='2016', new=False, cutoff=None):
+    def __init__(self, mappings, year, new=False, cutoff=None):
         """
         Initialise the LakeBot.
 
@@ -52,9 +52,7 @@ class LakeBot(WfdBot):
         :param cutoff: the number of items to process before stopping. None
             being interpreted as all.
         """
-        super(LakeBot, self).__init__(mappings, new, cutoff, EDIT_SUMMARY)
-        self.year = year
-        self.dataset_q = 'Q27074294'
+        super(LakeBot, self).__init__(mappings, year, new, cutoff, EDIT_SUMMARY)
 
         self.swb_q = None  # @todo: figure out/create the appropriate item
         self.eu_swb_p = 'P2856'  # eu_cd
@@ -79,42 +77,15 @@ class LakeBot(WfdBot):
         """Set values shared by every lake in the dataset."""
         country = data.get('countryCode')
         country_q = self.mappings.get('countryCode').get(country).get('qId')
-        rbd_q = self.rbd_items.get(data.get('euRBDCode'))
+
+        rbd_q = self.rbd_items.get[data.get('euRBDCode')]
+
+        wfd_year_datasets = self.mappings.get('dataset').get(self.year)
 
         self.country = self.wd.QtoItemPage(country_q)
         self.rbd = self.wd.QtoItemPage(rbd_q)
+        self.dataset_q = wfd_year_datasets.get(country)
         self.ref = self.make_ref(data)
-
-    def validate_indata(self, data):
-        """
-        Validate that all encountered values needing to be mapped are.
-
-        :param data: the source data from the xml
-        """
-        # validate @language
-        # @todo: DO we use this?
-        assert data.get('@language') in self.mappings.get('languageCode')
-        # @todo: check descriptions?
-
-        # validate <countryCode>
-        assert data.get('countryCode') in self.mappings.get('countryCode')
-
-        # validate <euRBDCode>
-        assert data.get('euRBDCode') in self.rbd_items
-
-        # validate each <surfaceWaterBodyCategory> and
-        # <swSignificantImpactType>
-        swb_cats = set()
-        impacts = set()
-        for swb in data.get('SurfaceWaterBody'):
-            swb_cats.add(swb.get('surfaceWaterBodyCategory'))
-            impacts |= set(swb.get('swSignificantImpactType'))
-        impacts = [impact.split(' - ')[0] for impact in impacts]
-
-        assert all(swb_cat in self.mappings.get('surfaceWaterBodyCategory')
-                   for swb_cat in swb_cats)
-        assert all(impact in self.mappings.get('swSignificantImpactType')
-                   for impact in impacts)
 
     def process_all_swb(self, data):
         """
@@ -238,7 +209,7 @@ class LakeBot(WfdBot):
         in_file = None
         new = False
         cutoff = None
-        year = None
+        year = '2016'
 
         # Load pywikibot args and handle local args
         for arg in pywikibot.handle_args(args):
@@ -259,14 +230,48 @@ class LakeBot(WfdBot):
         if not in_file:
             raise pywikibot.Error('An in_file must be specified')
 
-        # load mappings and initialise LakeBot object
+        # load and validate data and mappings
         mappings = helpers.load_json_file(mappings, force_path)
         data = WfdBot.load_data(in_file, key='SWB')
+        validate_indata(data, mappings, year)
+
+        # initialise LakeBot object
         bot = LakeBot(mappings, year, new=new, cutoff=cutoff)
-        bot.validate_indata(data)
         bot.set_common_values(data)
 
         bot.process_all_swb(data)
+
+
+def validate_indata(data, mappings, year):
+    """
+    Validate that all encountered values needing to be mapped are.
+
+    :param data: the source data from the xml
+    """
+    # validate @language
+    # @todo: DO we use this?
+    assert data.get('@language') in mappings.get('languageCode')
+    # @todo: check descriptions?
+
+    # validate <countryCode>
+    assert data.get('countryCode') in mappings.get('countryCode')
+
+    # ensure matching dataset exists
+    assert mappings.get('dataset').get(year).get(data.get('countryCode'))
+
+    # validate each <surfaceWaterBodyCategory> and
+    # <swSignificantImpactType>
+    swb_cats = set()
+    impacts = set()
+    for swb in data.get('SurfaceWaterBody'):
+        swb_cats.add(swb.get('surfaceWaterBodyCategory'))
+        impacts |= set(swb.get('swSignificantImpactType'))
+    impacts = [impact.split(' - ')[0] for impact in impacts]
+
+    assert all(swb_cat in mappings.get('surfaceWaterBodyCategory')
+               for swb_cat in swb_cats)
+    assert all(impact in mappings.get('swSignificantImpactType')
+               for impact in impacts)
 
 
 if __name__ == "__main__":

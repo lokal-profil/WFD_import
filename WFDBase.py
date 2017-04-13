@@ -15,7 +15,7 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 class WfdBot(object):
     """Base bot to enrich Wikidata with info from WFD."""
 
-    def __init__(self, mappings, new, cutoff, edit_summary):
+    def __init__(self, mappings, year, new, cutoff, edit_summary):
         """
         Initialise the WfdBot.
 
@@ -32,6 +32,7 @@ class WfdBot(object):
         self.new = new
         self.cutoff = cutoff
         self.mappings = mappings
+        self.year = year
 
         # the following must be overridden
         self.dataset_q = None

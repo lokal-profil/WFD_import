@@ -44,7 +44,7 @@ class RbdBot(WfdBot):
     """Bot to enrich/create info on Wikidata for RBD objects."""
 
     def __init__(self, mappings, new=False, cutoff=None):
-        """Initialise the bot."""
+        """Initialise the RbdBot."""
         super(RbdBot, self).__init__(mappings, new, cutoff, EDIT_SUMMARY)
         self.dataset_q = 'Q27074294'
 

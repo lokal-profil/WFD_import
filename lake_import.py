@@ -139,7 +139,7 @@ class LakeBot(WfdBot):
 
     def process_single_swb(self, data, item):
         """
-        Process (whether item exists or not)
+        Process a swb (whether item exists or not).
 
         :param data: dict of data for a single swb
         :param item: Wikidata item associated with a swb, or None if one

@@ -77,12 +77,11 @@ class WfdBot(object):
                     self.wd.addNewClaim(
                         pc_prop, pc_value, item, self.ref)
 
-    # @todo: Resolve T159134 and de-duplicate with RBD.make_ref
     def make_ref(self, data):
         """Make a Reference object for the dataset.
 
         Contains 4 parts:
-        * P248: Stated in <the WFD2016 dataset>
+        * P248: Stated in <the WFD2016 dataset> (per year and country)
         * P577: Publication date <from creation date of the document>
         * P854: Reference url <using the input url>
         * P813: Retrieval date <current date>

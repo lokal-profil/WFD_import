@@ -14,6 +14,7 @@ usage:
 
 &params;
 """
+from __future__ import unicode_literals
 import pywikibot
 
 import wikidataStuff.helpers as helpers
@@ -22,7 +23,7 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 from WFDBase import WfdBot
 
-parameter_help = u"""\
+parameter_help = """\
 RBDbot options (may be omitted):
 -new               if present new items are created on Wikidata, otherwise
                    only updates are processed.
@@ -36,7 +37,7 @@ Can also handle any pywikibot options. Most importantly:
 -help              output all available options
 """
 docuReplacements = {'&params;': parameter_help}
-EDIT_SUMMARY = u'importing #RBD using data from #WFD'
+EDIT_SUMMARY = 'importing #RBD using data from #WFD'
 
 
 class RbdBot(WfdBot):
@@ -49,7 +50,8 @@ class RbdBot(WfdBot):
 
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
-        self.area_unit = pywikibot.ItemPage(self.repo, 'Q712226')
+        self.area_unit = pywikibot.ItemPage(self.repo,
+                                            helpers.get_unit_q('km²'))
 
         self.langs = ('en', 'sv')  # languages which require translations
         self.countries = mappings['countryCode']
@@ -175,12 +177,12 @@ class RbdBot(WfdBot):
 
         # print data
         # create new empty item and request Q-number
-        summary = u'Creating new RBD item with #WFDdata'
+        summary = 'Creating new RBD item with #WFDdata'
         item = None
         try:
             item = self.wd.make_new_item(data, summary)
         except pywikibot.data.api.APIError as e:
-            raise pywikibot.Error(u'Error during item creation: %s' % e)
+            raise pywikibot.Error('Error during item creation: %s' % e)
 
         return item
 
@@ -249,22 +251,22 @@ class RbdBot(WfdBot):
         """
         protoclaims = {}
         #   P31: self.rbd_q
-        protoclaims[u'P31'] = WdS.Statement(
+        protoclaims['P31'] = WdS.Statement(
             self.wd.QtoItemPage(self.rbd_q))
         #   self.eu_rbd_p: euRBDCode
         protoclaims[self.eu_rbd_p] = WdS.Statement(
-            entry_data[u'euRBDCode'])
+            entry_data['euRBDCode'])
         #   P17: country (via self.countries)
-        protoclaims[u'P17'] = WdS.Statement(
+        protoclaims['P17'] = WdS.Statement(
             self.wd.QtoItemPage(country_q))
         #   P137: primeCompetentAuthority (via self.competent_authorities)
-        protoclaims[u'P137'] = WdS.Statement(
+        protoclaims['P137'] = WdS.Statement(
             self.wd.QtoItemPage(
                 self.competent_authorities[
-                    entry_data[u'primeCompetentAuthority']]))
+                    entry_data['primeCompetentAuthority']]))
         #   P2046: rbdArea + self.area_unit (can I set unknown accuracy)
-        protoclaims[u'P2046'] = WdS.Statement(
-            pywikibot.WbQuantity(entry_data[u'rbdArea'],
+        protoclaims['P2046'] = WdS.Statement(
+            pywikibot.WbQuantity(entry_data['rbdArea'],
                                  unit=self.area_unit, site=self.wd.repo))
         return protoclaims
 

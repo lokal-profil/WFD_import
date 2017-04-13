@@ -11,6 +11,9 @@ usage:
 
 &params;
 """
+from __future__ import unicode_literals
+from builtins import dict
+
 import pywikibot
 
 import wikidataStuff.helpers as helpers
@@ -18,7 +21,7 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 from WFDBase import WfdBot
 
-parameter_help = u"""\
+parameter_help = """\
 Lakebot options (may be omitted):
 -year              Year to which the WFD data applies.
 -new               if present new items are created on Wikidata, otherwise
@@ -33,7 +36,7 @@ Can also handle any pywikibot options. Most importantly:
 -help              output all available options
 """
 docuReplacements = {'&params;': parameter_help}
-EDIT_SUMMARY = u'importing #SWB using data from #WFD'
+EDIT_SUMMARY = 'importing #SWB using data from #WFD'
 
 
 class LakeBot(WfdBot):
@@ -58,6 +61,9 @@ class LakeBot(WfdBot):
         self.eu_swb_cat_p = None  # @todo surfaceWaterBodyCategory (qualifier or prop)
         self.eu_rbd_p = 'P2965'  # euRBDCode
 
+        self.swb_cats = mappings.get('surfaceWaterBodyCategory')
+        self.impact_types = mappings.get('swSignificantImpactType')
+
         self.load_known_items()
 
     def load_known_items(self):
@@ -72,7 +78,7 @@ class LakeBot(WfdBot):
     def set_common_values(self, data):
         """Set values shared by every lake in the dataset."""
         country = data.get('countryCode')
-        country_q = self.mappings('countryCode').get(country).get('qId')
+        country_q = self.mappings.get('countryCode').get(country).get('qId')
         rbd_q = self.rbd_items.get(data.get('euRBDCode'))
 
         self.country = self.wd.QtoItemPage(country_q)
@@ -87,11 +93,11 @@ class LakeBot(WfdBot):
         """
         # validate @language
         # @todo: DO we use this?
-        assert data.get('@language') in self.mappings('languageCode')
+        assert data.get('@language') in self.mappings.get('languageCode')
         # @todo: check descriptions?
 
         # validate <countryCode>
-        assert data.get('countryCode') in self.mappings('countryCode')
+        assert data.get('countryCode') in self.mappings.get('countryCode')
 
         # validate <euRBDCode>
         assert data.get('euRBDCode') in self.rbd_items
@@ -105,9 +111,9 @@ class LakeBot(WfdBot):
             impacts |= set(swb.get('swSignificantImpactType'))
         impacts = [impact.split(' - ')[0] for impact in impacts]
 
-        assert all(swb_cat in self.mappings('surfaceWaterBodyCategory')
+        assert all(swb_cat in self.mappings.get('surfaceWaterBodyCategory')
                    for swb_cat in swb_cats)
-        assert all(impact in self.mappings('swSignificantImpactType')
+        assert all(impact in self.mappings.get('swSignificantImpactType')
                    for impact in impacts)
 
     def process_all_swb(self, data):
@@ -136,7 +142,7 @@ class LakeBot(WfdBot):
         Process (whether item exists or not)
 
         :param data: dict of data for a single swb
-        :param item: Wikidata item asssociated with a swb, or None if one
+        :param item: Wikidata item associated with a swb, or None if one
             should be created.
         """
         item = item or self.create_new_swb_item(data)
@@ -165,45 +171,64 @@ class LakeBot(WfdBot):
 
         :param data: dict of data for a single swb
         """
-        protoclaims = {}
+        protoclaims = dict()
 
         # P31: self.swb_q with surfaceWaterBodyCategory qualifier
-        # @todo: Is P794 the appropriate qualifier
-        swb_cat = self.mappings('surfaceWaterBodyCategory').get(
-            data.get(u'surfaceWaterBodyCategory'))
-        protoclaims[u'P31'] = WdS.Statement(
+        # @todo: Is P794 the appropriate qualifier (and should it be a
+        #        qualifier or separate claim).
+        swb_cat = self.swb_cats.get(data.get('surfaceWaterBodyCategory'))
+        protoclaims['P31'] = WdS.Statement(
             self.wd.QtoItemPage(self.swb_q)).addQualifier(
                 WdS.Qualifier(self.eu_swb_cat_p,
                               self.wd.QtoItemPage(swb_cat)))
 
         # self.eu_swb_p: euSurfaceWaterBodyCode
         protoclaims[self.eu_swb_p] = WdS.Statement(
-            data.get(u'euSurfaceWaterBodyCode'))
+            data.get('euSurfaceWaterBodyCode'))
 
-        # P17: country (via self.countries)
-        protoclaims[u'P17'] = WdS.Statement(self.country)
+        # P17: country
+        protoclaims['P17'] = WdS.Statement(self.country)
 
         # P361: parent RBD
-        protoclaims[u'P361'] = WdS.Statement(self.rbd)
+        protoclaims['P361'] = WdS.Statement(self.rbd)
 
-        # P3643: swSignificantImpactType with year as timePoint
-        # @todo: Needs knowledge of existing claims to handle adding endtimes
-        # and not adding timepoints for ongoing claims (but change these to
-        # start time?)
-        protoclaims[u'P3643'] = []
-        for impact in data.get('swSignificantImpactType'):
-            impact = impact.split(' - ')[0]
-            impact_q = self.mappings('swSignificantImpactType').get(impact)
-            protoclaims[u'P3643'].append(
-                WdS.Statement(self.wd.QtoItemPage(impact_q)).addQualifier(
-                    WdS.Qualifier('P585', self.year)))
-        if not protoclaims[u'P3643']:
-            # none were added for this year
-            protoclaims[u'P3643'].append(
-                WdS.Statement('novalue', special=True).addQualifier(
-                    WdS.Qualifier('P585', self.year)))
+        # P3643: swSignificantImpactType
+        protoclaims['P3643'] = self.make_significant_impact_type(data)
 
         return protoclaims
+
+    def make_significant_impact_type(self, data):
+        """
+        Construct statements for swSignificantImpactType data.
+
+        Uses self.year as timepoint.
+
+        Sets the 'novalue' statement if there are no impact types in the data.
+
+        @todo: This needs to be made aware of pre-existing claim to be able to
+               update the data. Specifically:
+               * If a claim was previously present but is not any more:
+                 add an end time as qualifier to that value.
+               * If a claim was previously present and still is:
+                 no change needed (but we should possibly us start time instead
+                 of time point?
+               * In both cases the reference can still be added.
+
+        :param data: dict of data for a single swb
+        """
+        claims = []
+        for impact in data.get('swSignificantImpactType'):
+            impact = impact.split(' - ')[0]
+            impact_q = self.impact_types.get(impact)
+            claims.append(
+                WdS.Statement(self.wd.QtoItemPage(impact_q)).addQualifier(
+                    WdS.Qualifier('P585', self.year)))
+        if not claims:
+            # none were added for this year
+            claims.append(
+                WdS.Statement('novalue', special=True).addQualifier(
+                    WdS.Qualifier('P585', self.year)))
+        return claims
 
     @staticmethod
     def main(*args):

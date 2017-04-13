@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """Base class on which to build WFD import bots."""
+from __future__ import unicode_literals
 import requests
 import xmltodict
 import datetime
@@ -30,6 +31,7 @@ class WfdBot(object):
         self.wd = WdS(self.repo, edit_summary)
         self.new = new
         self.cutoff = cutoff
+        self.mappings = mappings
 
         # the following must be overridden
         self.dataset_q = None
@@ -92,6 +94,8 @@ class WfdBot(object):
                 'self.dataset_q must be set by the class inheriting WfdBot')
 
         creation_date = helpers.iso_to_WbTime(data['@creationDate'])
+        retrieval_date = helpers.iso_to_WbTime(data['retrieval_date'])
+
         ref = WdS.Reference(
             source_test=[
                 self.wd.make_simple_claim(
@@ -106,7 +110,7 @@ class WfdBot(object):
                     creation_date),
                 self.wd.make_simple_claim(
                     'P813',
-                    helpers.today_as_WbTime())
+                    retrieval_date)
             ]
         )
         return ref

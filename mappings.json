@@ -66,6 +66,10 @@
                 "en": "international river basin district in {country}",
                 "sv": "internationellt vattendistrikt i {country}"
             }
+        },
+        "SWB": {
+            "en": "a surface water body in {country}",
+            "sv": "en ytvattenförekomst i {country}"
         }
     }
 }

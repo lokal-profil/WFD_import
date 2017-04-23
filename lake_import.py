@@ -7,7 +7,7 @@ Author: Lokal_Profil
 License: MIT
 
 usage:
-    python WFD/lake_import.py [OPTIONS]
+    python lake_import.py [OPTIONS]
 
 &params;
 """
@@ -52,11 +52,12 @@ class LakeBot(WfdBot):
         :param cutoff: the number of items to process before stopping. None
             being interpreted as all.
         """
-        super(LakeBot, self).__init__(mappings, year, new, cutoff, EDIT_SUMMARY)
+        super(LakeBot, self).__init__(mappings, year, new, cutoff,
+                                      EDIT_SUMMARY)
 
         self.swb_q = None  # @todo: figure out/create the appropriate item
         self.eu_swb_p = 'P2856'  # eu_cd
-        self.eu_swb_cat_p = None  # @todo surfaceWaterBodyCategory (qualifier or prop)
+        self.eu_swb_cat_p = None  # @todo surfaceWaterBodyCategory
         self.eu_rbd_p = 'P2965'  # euRBDCode
 
         self.swb_cats = mappings.get('surfaceWaterBodyCategory')
@@ -138,7 +139,7 @@ class LakeBot(WfdBot):
         """
         # Add at least label, description and
         # eu_swb_code (references can be added later)
-        desc = self.make_descriptions(self.descriptions)
+        # desc = self.make_descriptions(self.descriptions)
         raise NotImplementedError
 
     def make_protoclaims(self, data):
@@ -154,8 +155,8 @@ class LakeBot(WfdBot):
         protoclaims = dict()
 
         # P31: self.swb_q with surfaceWaterBodyCategory qualifier
-        # @todo: Is P794 the appropriate qualifier (and should it be a
-        #        qualifier or separate claim).
+        # @todo: Is P794 the appropriate qualifier (for eu_swb_cat_p)
+        #        (and should it be a qualifier or separate claim).
         swb_cat = self.swb_cats.get(data.get('surfaceWaterBodyCategory'))
         protoclaims['P31'] = WdS.Statement(
             self.wd.QtoItemPage(self.swb_q)).addQualifier(

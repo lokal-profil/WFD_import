@@ -10,7 +10,7 @@ License: MIT
     as it's P2541
 
 usage:
-    python WFD/RBD.py [OPTIONS]
+    python RBD.py [OPTIONS]
 
 &params;
 """
@@ -216,18 +216,19 @@ class RbdBot(WfdBot):
         return descriptions
 
     def make_protoclaims(self, entry_data, country_q):
-        """Construct potential claims for an entry.
+        """
+        Construct potential claims for an entry.
 
         Expects that entry_data is a dict like:
         {
             "euRBDCode": "SE5101",
             "internationalRBD": "Yes",
-            "internationalRBDName": "5. Skagerrak and Kattegat (International drainage basin Glomma - Sweden)",
+            "internationalRBDName": "<long name>",
             "primeCompetentAuthority": "SE5",
             "otherCompetentAuthority": "SEHAV",
             "rbdArea": "990",
             "rbdAreaExclCW": "Data is missing",
-            "rbdName": "5. Skagerrak and Kattegat (International drainage basin Glomma - Sweden)",
+            "rbdName": "<long name>",
             "subUnitsDefined": "No"
         }
 

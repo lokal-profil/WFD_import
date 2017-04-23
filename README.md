@@ -1,4 +1,4 @@
-## WFD-import
+## WFD_import
 A batch import of European water data based on the Water Framework Directive
 reporting.
 

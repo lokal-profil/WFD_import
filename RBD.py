@@ -52,7 +52,6 @@ class RbdBot(WfdBot):
         self.area_unit = pywikibot.ItemPage(self.repo,
                                             helpers.get_unit_q('km²'))
 
-        self.langs = ('en', 'sv')  # languages which require translations
         self.countries = mappings['countryCode']
         self.competent_authorities = mappings['CompetentAuthority']
         self.descriptions = mappings['descriptions']['RBD']
@@ -78,17 +77,8 @@ class RbdBot(WfdBot):
         return rbd_id_items
 
     def check_all_descriptions(self):
-        """Check that the description are available for all langauges."""
-        diff_national = set(self.langs) - \
-            set(self.descriptions.get('national').keys())
-        diff_international = set(self.langs) - \
-            set(self.descriptions.get('international').keys())
-        diff = diff_national.union(diff_international)
-
-        if diff:
-            raise pywikibot.Error(
-                "The following languages need a description: %s" %
-                ', '.join(diff))
+        """Check that the description are available for all languages."""
+        WfdBot.validate_mapping(self.descriptions, self.langs, 'descriptions')
 
     def check_all_competent_authorities(self, data, country):
         """Check that all competent authorities are mapped.
@@ -100,12 +90,8 @@ class RbdBot(WfdBot):
         for d in data:
             found_ca.append(d['primeCompetentAuthority'])
 
-        diff = set(found_ca) - set(self.competent_authorities.keys())
-        if diff:
-            country_en = self.countries.get(country).get('en')
-            raise pywikibot.Error("The following competent authroities should "
-                                  "be created before processing %s: %s"
-                                  % (country_en, ', '.join(diff)))
+        WfdBot.validate_mapping(self.competent_authorities, found_ca,
+                                'CompetentAuthority')
 
     def check_country(self, country):
         """Check that the country is mapped and that languages are available.

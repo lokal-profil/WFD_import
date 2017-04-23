@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Base class on which to build WFD import bots."""
 from __future__ import unicode_literals
+from builtins import dict
 import requests
 import xmltodict
 import datetime
@@ -10,6 +11,25 @@ import pywikibot
 
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
+
+
+class UnmappedValueError(pywikibot.Error):
+    """Error when encountering values which need to be manually mapped."""
+
+    message = 'The following values for "{}" were not mapped: {}'
+
+    def __init__(self, mapping, value, message=None):
+        """
+        Initialise the error.
+
+        :param mapping: the name of the mapping object where the value was
+            expected
+        :param value: the missing value (or values)
+        :param message: message used to override the default message
+        """
+        message = message or self.message
+        super(UnmappedValueError, self).__init__(
+            message.format(mapping, value))
 
 
 class WfdBot(object):
@@ -34,12 +54,53 @@ class WfdBot(object):
         self.mappings = mappings
         self.year = year
 
+        # Languages in which we require translations of descriptions and
+        # country names.
+        self.langs = ('en', 'sv')
+
         # the following must be overridden
         self.dataset_q = None
         self.ref = None
+        self.language = None
+        self.descriptions = None
+
+    # @todo: implement in RBD
+    def set_common_values(self, data):
+        """
+        Set and validate values shared by every instance of the batch.
+
+        :param data: dict of all the data for the batch
+        """
+        country = data.get('countryCode')
+        try:
+            self.country_dict = self.mappings.get('countryCode')[country]
+            self.country = self.wd.QtoItemPage(self.country_dict['qId'])
+        except KeyError:
+            raise UnmappedValueError('countryCode', country)
+        WfdBot.validate_mapping(self.country_dict, self.langs, 'countryCode')
+
+        try:
+            wfd_year_datasets = self.mappings.get('dataset')[self.year]
+            self.dataset_q = wfd_year_datasets[country]
+        except KeyError:
+            raise UnmappedValueError('dataset', (self.year, country))
+
+        # per schema "Code of the language of the file" but it isn't
+        try:
+            language = data.get('@language')
+            self.language = self.mappings.get('languageCode')[language]
+        except KeyError:
+            raise UnmappedValueError('languageCode', language)
+
+        self.ref = self.make_ref(data)
 
     def commit_labels(self, labels, item):
-        """Add labels and aliases to item."""
+        """
+        Add labels and aliases to item.
+
+        :param labels: label object
+        :param item: item to add labels to
+        """
         if not labels:
             return
         for lang, data in labels.iteritems():
@@ -115,6 +176,25 @@ class WfdBot(object):
         )
         return ref
 
+    # @todo: implement in RBD
+    def make_descriptions(self, description_dict):
+        """
+        Make a description object in the required languages.
+
+        The provided description strings can support taking the country name
+        as a formatting variable.
+
+        :param description_dict: dict with language codes as keys and
+            description string as value.
+        :return: description object
+        """
+        descriptions = dict()
+        for lang in self.langs:
+            desc = description_dict.get(lang).format(
+                country=self.country_dict.get(lang))
+            descriptions[lang] = {'language': lang, 'value': desc}
+        return descriptions
+
     @staticmethod
     def load_xml_url_data(url, key=None):
         """
@@ -150,3 +230,29 @@ class WfdBot(object):
         if in_file.partition('://')[0] in ('http', 'https'):
             return WfdBot.load_xml_url_data(in_file, key)
         return helpers.load_json_file(in_file)
+
+    @staticmethod
+    def validate_mapping(found, expected, label):
+        """
+        Validate that all of the expected key are found in a given mapping.
+
+        :param found: the found mapping. Can either be a dict of values or a
+            dict of dicts with values.
+        :param expected: the expected keys in the dict or each containing dict
+        :param label: a label describing the mapping
+        """
+        expected = set(expected)
+        is_dict = False
+        for k, v in found.items():
+            if isinstance(v, dict):
+                is_dict = True
+
+        if is_dict:
+            for k, v in found.items():
+                diff = expected - set(v.keys())
+                if diff:
+                    raise UnmappedValueError(label, (k, diff))
+        else:
+            diff = expected - set(found.keys())
+            if diff:
+                raise UnmappedValueError(label, diff)

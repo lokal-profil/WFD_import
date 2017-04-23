@@ -19,7 +19,7 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFDBase import WfdBot
+from WFDBase import WfdBot, UnmappedValueError
 
 parameter_help = """\
 Lakebot options (may be omitted):
@@ -74,24 +74,27 @@ class LakeBot(WfdBot):
         self.rbd_items = helpers.fill_cache_wdqs(self.eu_rbd_p)
 
     def set_common_values(self, data):
-        """Set values shared by every lake in the dataset."""
-        country = data.get('countryCode')
-        country_q = self.mappings.get('countryCode').get(country).get('qId')
+        """
+        Set and validate values shared by every lake in the dataset.
 
-        rbd_q = self.rbd_items.get[data.get('euRBDCode')]
+        :param data: dict of all the swb:s in the RBD
+        """
+        super(LakeBot, self).set_common_values(data)
+        try:
+            rbd_q = self.rbd_items.get[data.get('euRBDCode')]
+            self.rbd = self.wd.QtoItemPage(rbd_q)
+        except KeyError:
+            raise UnmappedValueError('online rbd objects',
+                                     data.get('euRBDCode'))
 
-        wfd_year_datasets = self.mappings.get('dataset').get(self.year)
-
-        self.country = self.wd.QtoItemPage(country_q)
-        self.rbd = self.wd.QtoItemPage(rbd_q)
-        self.dataset_q = wfd_year_datasets.get(country)
-        self.ref = self.make_ref(data)
+        self.descriptions = self.mappings.get('descriptions').get('SWB')
+        WfdBot.validate_mapping(self.descriptions, self.langs, 'descriptions')
 
     def process_all_swb(self, data):
         """
         Handle all the surface water bodies in a single RBD.
 
-        Only increments counter when updating an swb.
+        Only increments counter when an swb is updated.
 
         :param data: dict of all the swb:s in the RBD
         """
@@ -128,13 +131,19 @@ class LakeBot(WfdBot):
         self.commit_claims(protoclaims, item)
 
     def create_new_swb_item(self, data):
-        """Create a new swb item with some basic info and return."""
-        # Add at lest label, description and
+        """
+        Create a new swb item with some basic info and return.
+
+        :param data: dict of data for a single swb
+        """
+        # Add at least label, description and
         # eu_swb_code (references can be added later)
+        desc = self.make_descriptions(self.descriptions)
         raise NotImplementedError
 
     def make_protoclaims(self, data):
-        """Construct potential claims for an entry.
+        """
+        Construct potential claims for an entry.
 
         @todo: More logic for ImpactType
         @todo: Qualifier property for SWB category
@@ -233,7 +242,7 @@ class LakeBot(WfdBot):
         # load and validate data and mappings
         mappings = helpers.load_json_file(mappings, force_path)
         data = WfdBot.load_data(in_file, key='SWB')
-        validate_indata(data, mappings, year)
+        validate_indata(data, mappings)
 
         # initialise LakeBot object
         bot = LakeBot(mappings, year, new=new, cutoff=cutoff)
@@ -242,36 +251,28 @@ class LakeBot(WfdBot):
         bot.process_all_swb(data)
 
 
-def validate_indata(data, mappings, year):
+def validate_indata(data, mappings):
     """
     Validate that all encountered values needing to be mapped are.
 
     :param data: the source data from the xml
+    :param mappings: dict holding data for any offline mappings
     """
-    # validate @language
-    # @todo: DO we use this?
-    assert data.get('@language') in mappings.get('languageCode')
-    # @todo: check descriptions?
-
-    # validate <countryCode>
-    assert data.get('countryCode') in mappings.get('countryCode')
-
-    # ensure matching dataset exists
-    assert mappings.get('dataset').get(year).get(data.get('countryCode'))
-
-    # validate each <surfaceWaterBodyCategory> and
+    # validate mapping of each <surfaceWaterBodyCategory> and
     # <swSignificantImpactType>
     swb_cats = set()
     impacts = set()
     for swb in data.get('SurfaceWaterBody'):
         swb_cats.add(swb.get('surfaceWaterBodyCategory'))
-        impacts |= set(swb.get('swSignificantImpactType'))
+        impacts |= set(helpers.listify(swb.get('swSignificantImpactType')))
     impacts = [impact.split(' - ')[0] for impact in impacts]
 
-    assert all(swb_cat in mappings.get('surfaceWaterBodyCategory')
-               for swb_cat in swb_cats)
-    assert all(impact in mappings.get('swSignificantImpactType')
-               for impact in impacts)
+    WfdBot.validate_mapping(
+        mappings.get('surfaceWaterBodyCategory'), swb_cats,
+        'surfaceWaterBodyCategory')
+    WfdBot.validate_mapping(
+        mappings.get('swSignificantImpactType'), impacts,
+        'swSignificantImpactType')
 
 
 if __name__ == "__main__":

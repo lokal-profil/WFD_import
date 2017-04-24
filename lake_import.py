@@ -57,7 +57,7 @@ class LakeBot(WfdBot):
 
         self.swb_q = None  # @todo: figure out/create the appropriate item
         self.eu_swb_p = 'P2856'  # eu_cd
-        self.eu_swb_cat_p = None  # @todo surfaceWaterBodyCategory
+        self.eu_swb_cat_p = None  # @todo see protoclaims
         self.eu_rbd_p = 'P2965'  # euRBDCode
 
         self.swb_cats = mappings.get('surfaceWaterBodyCategory')
@@ -135,18 +135,41 @@ class LakeBot(WfdBot):
         """
         Create a new swb item with some basic info and return.
 
+        The new item is created with a label, descriptions and
+        an eu_swb_code claim. This allows the item to be found in a second
+        pass should the script crash before adding the protoclaims.
+
+        The eu_swb_code is added without reference (this is handled
+        during the protoclaim stage)
+        The added label is in english per p.33 of the WFD specifications.
+        The protoclaim stage should recognise that the label has already been
+        added and thus not add it again.
+
         :param data: dict of data for a single swb
+        :return: pywikibot.ItemPage
         """
-        # Add at least label, description and
-        # eu_swb_code (references can be added later)
-        # desc = self.make_descriptions(self.descriptions)
-        raise NotImplementedError
+        name = data.get('surfaceWaterBodyName')
+        desc = self.make_descriptions(self.descriptions)
+        claim = self.wd.make_simple_claim(
+            self.eu_swb_p, data.get('euSurfaceWaterBodyCode'))
+
+        item_data = {
+            "labels": {
+                "en": {
+                    "language": "en",
+                    "value": name
+                }
+            },
+            "descriptions": desc,
+            "claims": [claim.toJSON(), ]
+        }
+
+        return self.wd.make_new_item(item_data, EDIT_SUMMARY)
 
     def make_protoclaims(self, data):
         """
         Construct potential claims for an entry.
 
-        @todo: More logic for ImpactType
         @todo: Qualifier property for SWB category
         @todo: Mapping of SWB categories
 
@@ -157,6 +180,8 @@ class LakeBot(WfdBot):
         # P31: self.swb_q with surfaceWaterBodyCategory qualifier
         # @todo: Is P794 the appropriate qualifier (for eu_swb_cat_p)
         #        (and should it be a qualifier or separate claim).
+        #        Or should we actually be setting the P31 to the swb_cat and
+        #        make that item an instance of swb_q
         swb_cat = self.swb_cats.get(data.get('surfaceWaterBodyCategory'))
         protoclaims['P31'] = WdS.Statement(
             self.wd.QtoItemPage(self.swb_q)).addQualifier(

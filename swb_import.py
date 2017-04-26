@@ -53,7 +53,7 @@ class SwbBot(WfdBot):
             being interpreted as all.
         """
         super(SwbBot, self).__init__(mappings, year, new, cutoff,
-                                      EDIT_SUMMARY)
+                                     EDIT_SUMMARY)
 
         self.swb_q = None  # @todo: figure out/create the appropriate item
         self.eu_swb_p = 'P2856'  # eu_cd

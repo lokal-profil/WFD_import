@@ -14,7 +14,8 @@
     "dataset": {
         "@meta": "The item corresponding to the country wfd dataset for that year",
         "2016": {
-            "FI": "Q29380097"
+            "FI": "Q29380097",
+            "SE": "Q29563137"
         }
     },
     "languageCode": {
@@ -68,8 +69,8 @@
             }
         },
         "SWB": {
-            "en": "a surface water body in {country}",
-            "sv": "en ytvattenförekomst i {country}"
+            "en": "surface water body in {country}",
+            "sv": "ytvattenförekomst i {country}"
         }
     }
 }

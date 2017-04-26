@@ -7,7 +7,7 @@ Author: Lokal_Profil
 License: MIT
 
 usage:
-    python lake_import.py [OPTIONS]
+    python swb_import.py [OPTIONS]
 
 &params;
 """
@@ -22,7 +22,7 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 from WFDBase import WfdBot, UnmappedValueError
 
 parameter_help = """\
-Lakebot options (may be omitted):
+SwbBot options (may be omitted):
 -year              Year to which the WFD data applies.
 -new               if present new items are created on Wikidata, otherwise
                    only updates are processed.
@@ -39,20 +39,20 @@ docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = 'importing #SWB using data from #WFD'
 
 
-class LakeBot(WfdBot):
-    """Bot to enrich/create info on Wikidata for lake objects."""
+class SwbBot(WfdBot):
+    """Bot to enrich/create info on Wikidata for SWB objects."""
 
     def __init__(self, mappings, year, new=False, cutoff=None):
         """
-        Initialise the LakeBot.
+        Initialise the SwbBot.
 
         :param mappings: dict holding data for any offline mappings
-        :param year: year of the report (used to date certain statements.
+        :param year: year of the report (used to date certain statements).
         :param new: whether to also create new items
         :param cutoff: the number of items to process before stopping. None
             being interpreted as all.
         """
-        super(LakeBot, self).__init__(mappings, year, new, cutoff,
+        super(SwbBot, self).__init__(mappings, year, new, cutoff,
                                       EDIT_SUMMARY)
 
         self.swb_q = None  # @todo: figure out/create the appropriate item
@@ -76,11 +76,11 @@ class LakeBot(WfdBot):
 
     def set_common_values(self, data):
         """
-        Set and validate values shared by every lake in the dataset.
+        Set and validate values shared by every SWB in the dataset.
 
-        :param data: dict of all the swb:s in the RBD
+        :param data: dict of all the SWB:s in the RBD
         """
-        super(LakeBot, self).set_common_values(data)
+        super(SwbBot, self).set_common_values(data)
         try:
             rbd_q = self.rbd_items.get[data.get('euRBDCode')]
             self.rbd = self.wd.QtoItemPage(rbd_q)
@@ -121,7 +121,7 @@ class LakeBot(WfdBot):
             should be created.
         """
         item = item or self.create_new_swb_item(data)
-        item.exists()
+        item.exists()  # load the item contents
 
         # Determine claims
         name = data.get('surfaceWaterBodyName')  # in English per page 33
@@ -270,8 +270,8 @@ class LakeBot(WfdBot):
         data = WfdBot.load_data(in_file, key='SWB')
         validate_indata(data, mappings)
 
-        # initialise LakeBot object
-        bot = LakeBot(mappings, year, new=new, cutoff=cutoff)
+        # initialise SwbBot object
+        bot = SwbBot(mappings, year, new=new, cutoff=cutoff)
         bot.set_common_values(data)
 
         bot.process_all_swb(data)
@@ -302,4 +302,4 @@ def validate_indata(data, mappings):
 
 
 if __name__ == "__main__":
-    LakeBot.main()
+    SwbBot.main()

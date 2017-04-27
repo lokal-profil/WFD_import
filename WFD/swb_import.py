@@ -19,7 +19,7 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFDBase import WfdBot, UnmappedValueError
+from WFD.WFDBase import WfdBot, UnmappedValueError
 
 parameter_help = """\
 SwbBot options (may be omitted):

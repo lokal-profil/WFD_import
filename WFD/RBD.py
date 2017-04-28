@@ -21,7 +21,7 @@ import wikidataStuff.helpers as helpers
 import wikidataStuff.wdqsLookup as wdqsLookup
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFDBase import WfdBot
+from WFD.WFDBase import WfdBot
 
 parameter_help = """\
 RBDbot options (may be omitted):

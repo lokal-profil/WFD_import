@@ -251,8 +251,10 @@ class WfdBot(object):
             for k, v in found.items():
                 diff = expected - set(v.keys())
                 if diff:
-                    raise UnmappedValueError(label, (k, diff))
+                    value = '({}, [{}])'.format(k, ', '.join(sorted(diff)))
+                    raise UnmappedValueError(label, value)
         else:
             diff = expected - set(found.keys())
             if diff:
-                raise UnmappedValueError(label, diff)
+                value = '[{}]'.format(', '.join(sorted(diff)))
+                raise UnmappedValueError(label, value)

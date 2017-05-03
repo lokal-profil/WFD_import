@@ -1,0 +1,76 @@
+{
+    "countryCode": {
+        "FI": {
+            "qId": "Q33",
+            "en": "Finland",
+            "sv": "Finland"
+        },
+        "SE": {
+            "qId": "Q34",
+            "en": "Sweden",
+            "sv": "Sverige"
+        }
+    },
+    "dataset": {
+        "@meta": "The item corresponding to the country wfd dataset for that year",
+        "2016": {
+            "FI": "Q29380097",
+            "SE": "Q29563137"
+        }
+    },
+    "languageCode": {
+        "fin": "fi",
+        "swe": "sv"
+    },
+    "CompetentAuthority": {
+        "SE1": "Q25386488",
+        "SE2": "Q26236748",
+        "SE3": "Q26236749",
+        "SE4": "Q26236750",
+        "SE5": "Q26236752",
+        "FIESA": "Q11858922",
+        "FIUUD": "Q5397811",
+        "FIEPO": "Q5411876",
+        "FIPOP": "Q18691367",
+        "FILAP": "Q11874605",
+        "FIAHV": "Q2625260"
+    },
+    "surfaceWaterBodyCategory": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/surfaceWaterBodyCategory",
+        "RW": "",
+        "LW": "",
+        "TW": "",
+        "CW": "",
+        "TeW": ""
+    },
+    "swSignificantImpactType": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swSignificantImpactType",
+        "ACID": "Q10501532",
+        "CHEM": "Q28854976",
+        "HHYC": "Q28855260",
+        "HMOC": "Q28855259",
+        "LITT": "Q1780867",
+        "LOWT": "Q28854973",
+        "MICR": "Q28854968",
+        "NUTR": "Q12203192",
+        "ORGA": "Q28854984",
+        "SALI": "Q2002254",
+        "TEMP": "Q2914309"
+    },
+    "descriptions": {
+        "RBD": {
+            "national": {
+                "en": "river basin district in {country}",
+                "sv": "vattendistrikt i {country}"
+            },
+            "international": {
+                "en": "international river basin district in {country}",
+                "sv": "internationellt vattendistrikt i {country}"
+            }
+        },
+        "SWB": {
+            "en": "surface water body in {country}",
+            "sv": "ytvattenförekomst i {country}"
+        }
+    }
+}

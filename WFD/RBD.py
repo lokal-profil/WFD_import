@@ -68,10 +68,10 @@ class RbdBot(WfdBot):
             eu_rbd_code = values.get(self.eu_rbd_p)
             if not eu_rbd_code:
                 raise pywikibot.Error(
-                    'Found an RBD without euRBDCode: %s' % q_id)
+                    'Found an RBD without euRBDCode: {}'.format(q_id))
             elif eu_rbd_code in rbd_id_items.keys():
                 raise pywikibot.Error(
-                    'Found an two RBDs with same euRBDCode: %s & %s' % (
+                    'Found an two RBDs with same euRBDCode: {} & {}'.format(
                         q_id, rbd_id_items[eu_rbd_code]))
             rbd_id_items[eu_rbd_code] = q_id
         return rbd_id_items
@@ -100,17 +100,18 @@ class RbdBot(WfdBot):
         """
         country_data = self.countries.get(country)
         if not country_data:
-            raise pywikibot.Error("The country code \"%s\" was not mapped."
-                                  % country)
+            raise pywikibot.Error(
+                "The country code \"{}\" was not mapped.".format(country))
         if not country_data.get('qId'):
-            raise pywikibot.Error("The country code \"%s\" was not mapped "
-                                  "to Wikidata." % country)
+            raise pywikibot.Error(
+                "The country code \"{}\" was not mapped to Wikidata.".format(
+                    country))
 
         diff = set(self.langs) - set(country_data.keys())
         if diff:
-            raise pywikibot.Error("The following languages should be mapped "
-                                  "for country %s before continuing: %s"
-                                  % (country, ', '.join(diff)))
+            raise pywikibot.Error(
+                'The following languages should be mapped for country {} '
+                'before continuing: {}'.format(country, ', '.join(diff)))
 
     def process_country_rbd(self, country, data):
         """Handle the RBDs of a single country.
@@ -167,7 +168,7 @@ class RbdBot(WfdBot):
         try:
             item = self.wd.make_new_item(data, summary)
         except pywikibot.data.api.APIError as e:
-            raise pywikibot.Error('Error during item creation: %s' % e)
+            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
 
         return item
 

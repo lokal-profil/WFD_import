@@ -56,7 +56,7 @@ class WfdBot(object):
 
         # Languages in which we require translations of descriptions and
         # country names.
-        self.langs = ('en', 'sv')
+        self.langs = ('en', 'sv', 'fi')
 
         # the following must be overridden
         self.dataset_q = None

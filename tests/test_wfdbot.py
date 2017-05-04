@@ -7,19 +7,30 @@ import unittest
 from WFD.WFDBase import WfdBot, UnmappedValueError
 
 
-class TestValidateMapping(unittest.TestCase):
+class CustomAsserts(object):
+
+    """Custom assertion methods to make life easier."""
+
+    def assert_not_raised(self, func, error):
+        """
+        Assert that a given error was not raised.
+
+        :param func: function call to test
+        :param error: error to listen for
+        """
+        try:
+            func
+        except error as e:
+            self.fail(e)
+
+
+class TestValidateMapping(unittest.TestCase, CustomAsserts):
 
     """Test the validate_mapping method."""
 
     def setUp(self):
         self.label = 'test'
         self.expected = ['a', 'b', 'c']
-
-    def assert_not_raised(self, func, error):
-        try:
-            func
-        except error as e:
-            self.fail(e)
 
     def test_validate_mapping_both_empty(self):
         self.assert_not_raised(

@@ -3,12 +3,14 @@
         "FI": {
             "qId": "Q33",
             "en": "Finland",
-            "sv": "Finland"
+            "sv": "Finland",
+            "fi": "Suomessa"
         },
         "SE": {
             "qId": "Q34",
             "en": "Sweden",
-            "sv": "Sverige"
+            "sv": "Sverige",
+            "fi": "Ruotsissa",
         }
     },
     "dataset": {
@@ -61,16 +63,19 @@
         "RBD": {
             "national": {
                 "en": "river basin district in {country}",
-                "sv": "vattendistrikt i {country}"
+                "sv": "vattendistrikt i {country}",
+                "fi": "vesipiiri {country}"
             },
             "international": {
                 "en": "international river basin district in {country}",
-                "sv": "internationellt vattendistrikt i {country}"
+                "sv": "internationellt vattendistrikt i {country}",
+                "fi": "kansainvälinen vesipiiri {country}"
             }
         },
         "SWB": {
             "en": "surface water body in {country}",
-            "sv": "ytvattenförekomst i {country}"
+            "sv": "ytvattenförekomst i {country}",
+            "fi": "pintavesimuodostuma {country}"
         }
     }
 }

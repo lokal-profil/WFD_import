@@ -12,3 +12,6 @@ command if you are running a different version of pywikibot from the required on
 This repo was split of from 
 [lokal-profil/wikidata_batches](https://github.com/lokal-profil/wikidata_batches)
 so the history might be a bit mixed up.
+
+### Issues
+Issues and bugs are tracked on [Phabricator](https://phabricator.wikimedia.org/tag/wmse-wfd-data-to-wikidata-2016/).

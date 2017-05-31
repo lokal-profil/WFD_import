@@ -39,11 +39,11 @@
     },
     "surfaceWaterBodyCategory": {
         "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/surfaceWaterBodyCategory",
-        "RW": "",
-        "LW": "",
-        "TW": "",
-        "CW": "",
-        "TeW": ""
+        "RW": "Q30092769",
+        "LW": "Q30092776",
+        "TW": "Q30092788",
+        "CW": "Q30092802",
+        "TeW": "Q30092867"
     },
     "swSignificantImpactType": {
         "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swSignificantImpactType",

@@ -55,9 +55,7 @@ class SwbBot(WfdBot):
         super(SwbBot, self).__init__(mappings, year, new, cutoff,
                                      EDIT_SUMMARY)
 
-        self.swb_q = None  # @todo: figure out/create the appropriate item
         self.eu_swb_p = 'P2856'  # eu_cd
-        self.eu_swb_cat_p = None  # @todo see protoclaims
         self.eu_rbd_p = 'P2965'  # euRBDCode
 
         self.swb_cats = mappings.get('surfaceWaterBodyCategory')
@@ -170,23 +168,13 @@ class SwbBot(WfdBot):
         """
         Construct potential claims for an entry.
 
-        @todo: Qualifier property for SWB category
-        @todo: Mapping of SWB categories
-
         :param data: dict of data for a single swb
         """
         protoclaims = dict()
 
-        # P31: self.swb_q with surfaceWaterBodyCategory qualifier
-        # @todo: Is P794 the appropriate qualifier (for eu_swb_cat_p)
-        #        (and should it be a qualifier or separate claim).
-        #        Or should we actually be setting the P31 to the swb_cat and
-        #        make that item an instance of swb_q
+        # P31: surfaceWaterBodyCategory
         swb_cat = self.swb_cats.get(data.get('surfaceWaterBodyCategory'))
-        protoclaims['P31'] = WdS.Statement(
-            self.wd.QtoItemPage(self.swb_q)).addQualifier(
-                WdS.Qualifier(self.eu_swb_cat_p,
-                              self.wd.QtoItemPage(swb_cat)))
+        protoclaims['P31'] = WdS.Statement(self.wd.QtoItemPage(swb_cat))
 
         # self.eu_swb_p: euSurfaceWaterBodyCode
         protoclaims[self.eu_swb_p] = WdS.Statement(

@@ -120,15 +120,19 @@ class SwbBot(WfdBot):
         :param item: Wikidata item associated with a swb, or None if one
             should be created.
         """
+        bad_names = ('not applicable', )  # known (lower case) non-names
         item = item or self.create_new_swb_item(data)
         item.exists()  # load the item contents
 
         # Determine claims
         name = data.get('surfaceWaterBodyName')  # in English per page 33
+        if name and name.lower() in bad_names:
+            name = None
         protoclaims = self.make_protoclaims(data)
 
         # Upload claims
-        self.wd.addLabelOrAlias('en', name, item)
+        if name:
+            self.wd.addLabelOrAlias('en', name, item)
         self.commit_claims(protoclaims, item)
 
     def create_new_swb_item(self, data):

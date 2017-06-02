@@ -32,6 +32,25 @@ class UnmappedValueError(pywikibot.Error):
             message.format(mapping, value))
 
 
+class UnexpectedValueError(pywikibot.Error):
+    """Error when encountering values which could not be handled."""
+
+    message = 'The following value for "{}" was unexpected: {}'
+
+    def __init__(self, field, value, message=None):
+        """
+        Initialise the error.
+
+        :param field: the name of the (xml) field where the value was
+            encountered
+        :param value: the missing value (or values)
+        :param message: message used to override the default message
+        """
+        message = message or self.message
+        super(UnexpectedValueError, self).__init__(
+            message.format(field, value))
+
+
 class WfdBot(object):
     """Base bot to enrich Wikidata with info from WFD."""
 

@@ -59,6 +59,14 @@
         "SALI": "Q2002254",
         "TEMP": "Q2914309"
     },
+    "swEcologicalStatusOrPotentialValue": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swEcologicalStatusOrPotentialValue",
+        "1": "Q30092114",
+        "2": "Q30092128",
+        "3": "Q30092136",
+        "4": "Q30092163",
+        "5": "Q30092172",
+    }
     "descriptions": {
         "RBD": {
             "national": {

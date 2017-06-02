@@ -19,7 +19,7 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFD.WFDBase import WfdBot, UnmappedValueError
+from WFD.WFDBase import WfdBot, UnmappedValueError, UnexpectedValueError
 
 parameter_help = """\
 SwbBot options (may be omitted):
@@ -193,6 +193,9 @@ class SwbBot(WfdBot):
         # P3643: swSignificantImpactType
         protoclaims['P3643'] = self.make_significant_impact_type(data)
 
+        # P4002: swEcologicalStatusOrPotentialValue
+        protoclaims['P4002'] = self.make_general_ecological_status(data)
+
         return protoclaims
 
     def make_significant_impact_type(self, data):
@@ -213,7 +216,9 @@ class SwbBot(WfdBot):
                * In both cases the reference can still be added.
 
         :param data: dict of data for a single swb
+        :return: [Statement]
         """
+        # @todo: Support for UNKN, OTHE (somevalue) + NOTA, NOSI (novalue)
         claims = []
         for impact in data.get('swSignificantImpactType'):
             impact = impact.split(' - ')[0]
@@ -227,6 +232,41 @@ class SwbBot(WfdBot):
                 WdS.Statement('novalue', special=True).addQualifier(
                     WdS.Qualifier('P585', self.year)))
         return claims
+
+    def make_general_ecological_status(self, data):
+        """
+        Construct statements for swEcologicalStatusOrPotentialValue data.
+
+        Uses self.year as timepoint (for the year the status was decided).
+
+        swEcologicalAssessmentYear gives the year, or range for which the
+        data was collected/assesments made.
+
+        Sets the 'somevalue' statement if the status is "Unknown".
+        Skips if the value is "Not applicable".
+
+        :param data: dict of data for a single swb
+        :return: Statement
+        """
+        claim = None
+        mapping = self.mappings.get('swEcologicalStatusOrPotentialValue')
+        raw_val = data.get('swEcologicalStatusOrPotentialValue')
+        mapped_val = mapping.get(raw_val)
+        if mapped_val:
+            claim = WdS.Statement(self.wd.QtoItemPage(mapped_val))
+        elif raw_val == 'Unknown':
+            claim = WdS.Statement('somevalue', special=True)
+        elif raw_val == 'Not applicable':
+            return
+        else:
+            raise UnexpectedValueError(
+                'swEcologicalStatusOrPotentialValue', raw_val)
+
+        if claim:
+            claim.addQualifier(WdS.Qualifier('P585', self.year))
+            # @todo: handle measurement years https://www.wikidata.org/wiki/Wikidata:Project_chat#Date_qualifiers
+
+        return claim
 
     @staticmethod
     def main(*args):

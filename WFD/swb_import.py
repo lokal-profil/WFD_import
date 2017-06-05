@@ -264,7 +264,7 @@ class SwbBot(WfdBot):
 
         if claim:
             claim.addQualifier(WdS.Qualifier('P585', self.year))
-            # @todo: handle measurement years https://www.wikidata.org/wiki/Wikidata:Project_chat#Date_qualifiers
+            # @todo: handle measurement years https://www.wikidata.org/wiki/Wikidata:Project_chat#Date_qualifiers  # noqa E501
 
         return claim
 

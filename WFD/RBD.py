@@ -140,9 +140,11 @@ class RbdBot(WfdBot):
             item.exists()
 
             labels = self.make_labels(entry_data, with_alias=True)
+            descriptions = self.make_descriptions(entry_data)
             protoclaims = self.make_protoclaims(
                 entry_data, self.countries.get(country).get('qId'))
             self.commit_labels(labels, item)
+            self.commit_descriptions(descriptions, item)
             self.commit_claims(protoclaims, item)
 
             # increment counter
@@ -154,67 +156,61 @@ class RbdBot(WfdBot):
         :param entry_data: dict with the data for the rbd
         :param country: country code
         """
-        data = {
-            'labels': {},
-            'descriptions': {}}
+        labels = WfdBot.convert_language_dict_to_json(
+            self.make_labels(entry_data), typ='labels')
+        desc = WfdBot.convert_language_dict_to_json(
+            self.make_descriptions(entry_data), typ='descriptions')
 
-        data['labels'] = self.make_labels(entry_data)
-        data['descriptions'] = self.make_descriptions(entry_data, country)
+        item_data = {
+            'labels': labels,
+            'descriptions': desc
+        }
 
-        # print data
-        # create new empty item and request Q-number
         summary = 'Creating new RBD item with #WFDdata'
-        item = None
         try:
-            item = self.wd.make_new_item(data, summary)
+            return self.wd.make_new_item(item_data, summary)
         except pywikibot.data.api.APIError as e:
             raise pywikibot.Error('Error during item creation: {:s}'.format(e))
 
-        return item
-
     def make_labels(self, entry_data, with_alias=False):
-        """Make a label object from the available info.
+        """
+        Make a label object from the available info.
 
-        rbdName always gives the english names.
-        internationalRBDName is sometimes in english, sometimes NULL and
+        rbdName always gives the English names.
+        internationalRBDName is sometimes in English, sometimes NULL and
         sometimes a comment.
 
-        The output is a dict with lang as key and a dict as value where that
-        dict in turn has a language and a value key. Both of these have string
-        values. Unless with_alias is provided.
+        The output is a dict with lang as key and a list of names as value.
 
         @todo Figure out how to handle internationalRBDName (which can be in
-              other languages, or a duplicate, or different english).
+              other languages, or a duplicate, or different English).
 
         :param entry_data: dict with the data for the rbd
-        :param with_alias: change the value to a list of all allowed labels.
+        :param with_alias: add RBDcode to list of names
         """
         labels = {}
-        labels['en'] = {'language': 'en', 'value': entry_data.get('rbdName')}
+
+        name = entry_data.get('rbdName')
+        if name and name.lower() not in self.bad_names:
+            labels['en'] = [name, ]
 
         if with_alias:
-            labels['en']['value'] = [labels.get('en').get('value'),
-                                     entry_data.get('euRBDCode')]
+            labels['en'] = labels.get('en') or []
+            labels['en'].append(entry_data.get('euRBDCode'))
         return labels
 
-    def make_descriptions(self, entry_data, country):
+    def make_descriptions(self, entry_data):
         """Make a description object from the available info.
 
-        @todo lookup country name through country mappings.
-              but store so that only one lookup (per language) is needed
         :param entry_data: dict with the data for the rbd
         :param country: country code
+        :return: dict
         """
         description_type = self.descriptions.get('national')
         if entry_data.get('internationalRBD') == 'Yes':
             description_type = self.descriptions.get('international')
 
-        descriptions = {}
-        for lang in self.langs:
-            desc = description_type.get(lang).format(
-                country=self.countries.get(country).get(lang))
-            descriptions[lang] = {'language': lang, 'value': desc}
-        return descriptions
+        return super(RbdBot, self).make_descriptions(description_type)
 
     def make_protoclaims(self, entry_data, country_q):
         """

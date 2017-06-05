@@ -54,6 +54,9 @@ class WfdBot(object):
         self.mappings = mappings
         self.year = year
 
+        # known (lower case) non-names
+        self.bad_names = ('not applicable', )
+
         # Languages in which we require translations of descriptions and
         # country names.
         self.langs = ('en', 'sv', 'fi')
@@ -101,13 +104,19 @@ class WfdBot(object):
         :param labels: label object
         :param item: item to add labels to
         """
-        if not labels:
-            return
-        for lang, data in labels.iteritems():
-            values = helpers.listify(data['value'])
-            for value in values:
-                self.wd.addLabelOrAlias(lang, value, item,
-                                        caseSensitive=False)
+        if labels:
+            self.wd.add_multiple_label_or_alias(
+                labels, item, case_sensitive=False)
+
+    def commit_descriptions(self, descriptions, item):
+        """
+        Add description to item.
+
+        :param description: description object
+        :param item: item to add descriptions to
+        """
+        if descriptions:
+            self.wd.add_multiple_descriptions(descriptions, item)
 
     def commit_claims(self, protoclaims, item):
         """
@@ -176,7 +185,6 @@ class WfdBot(object):
         )
         return ref
 
-    # @todo: implement in RBD
     def make_descriptions(self, description_dict):
         """
         Make a description object in the required languages.
@@ -192,7 +200,7 @@ class WfdBot(object):
         for lang in self.langs:
             desc = description_dict.get(lang).format(
                 country=self.country_dict.get(lang))
-            descriptions[lang] = {'language': lang, 'value': desc}
+            descriptions[lang] = desc
         return descriptions
 
     @staticmethod
@@ -258,3 +266,33 @@ class WfdBot(object):
             if diff:
                 value = '[{}]'.format(', '.join(sorted(diff)))
                 raise UnmappedValueError(label, value)
+
+    # @todo: Move to WikidataStuff.helpers?
+    @staticmethod
+    def convert_language_dict_to_json(data, typ):
+        """
+        Convert a description/label/alias dictionary to input formatted json.
+
+        The json format is needed during e.g. item creation.
+
+        :param data: a language-value dictionary where value is either a string
+            or list of strings.
+        :param typ: the type of output. Must be one of descriptions, labels or
+            aliases
+        :return: dict
+        """
+        if typ not in ('descriptions', 'labels', 'aliases'):
+            raise ValueError('"{0}" is not a valid type for '
+                             'convert_language_dict_to_json().'.format(typ))
+        allow_list = (typ == 'aliases')
+
+        json_data = dict()
+        for lang, val in data.items():
+            if not allow_list and isinstance(val, list):
+                if len(val) == 1:
+                    val = val[0]
+                else:
+                    raise ValueError('{0} must not have a list of values for '
+                                     'a single language.'.format(typ))
+            json_data[lang] = {'language': lang, 'value': val}
+        return json_data

@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 
 import unittest
 
-from WFD.WFDBase import WfdBot, UnmappedValueError
+from wikidataStuff.WikidataStuff import WikidataStuff as WdS
+
+from WFD.WFDBase import WfdBot, UnmappedValueError, UnexpectedValueError
 
 
 class CustomAsserts(object):
@@ -110,3 +112,41 @@ class TestValidateMapping(unittest.TestCase, CustomAsserts):
         self.assertEqual(
             str(cm.exception),
             'The following values for "test2" were not mapped: [c]')
+
+
+class TestYearsAsQualifiers(unittest.TestCase, CustomAsserts):
+
+    """Test the years_as_qualifiers method."""
+
+    def setUp(self):
+        self.statement = WdS.Statement('dummy')
+        self.expected = WdS.Statement('dummy')
+        self.source = 'a_field'
+
+    def test_years_as_qualifiers_empty(self):
+        expected_quals = []
+        self.assert_not_raised(
+            WfdBot.years_as_qualifiers('', self.statement, self.source),
+            UnexpectedValueError)
+        self.assertEqual(expected_quals, self.statement.quals)
+
+    def test_years_as_qualifiers_single(self):
+        self.expected._quals.add(WdS.Qualifier('P585', '1983'))
+        WfdBot.years_as_qualifiers('1983', self.statement, self.source)
+        self.assertEqual(self.expected, self.statement)
+
+    def test_years_as_qualifiers_range(self):
+        self.expected._quals.add(WdS.Qualifier('P580', '1983'))
+        self.expected._quals.add(WdS.Qualifier('P582', '2014'))
+        WfdBot.years_as_qualifiers('1983--2014', self.statement, self.source)
+        self.assertEqual(self.expected, self.statement)
+
+    def test_years_as_qualifiers_nonsense(self):
+        expected_quals = []
+        with self.assertRaises(UnexpectedValueError) as cm:
+            WfdBot.years_as_qualifiers(
+                'Hi', self.statement, self.source)
+        self.assertEqual(
+            str(cm.exception),
+            'The following value for "a_field" was unexpected: Hi')
+        self.assertEqual(expected_quals, self.statement.quals)

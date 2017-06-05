@@ -258,3 +258,42 @@ class WfdBot(object):
             if diff:
                 value = '[{}]'.format(', '.join(sorted(diff)))
                 raise UnmappedValueError(label, value)
+
+    @staticmethod
+    def years_as_qualifiers(years, statement, source):
+        """
+        Convert a year string, or year range string to qualifiers.
+
+        A single year is added as a point in time (P585) while a range is added
+        as a start date (P580) + end date (P582) pair.
+
+        :param years: the string contianing the year or years
+        :param statement: Statement to which the qualifier(s) should be added
+        :param source: the source field from which the string was retrieved
+        :raises: UnexpectedValueError if the string is non empty and cannot be
+            interpreted as a year or range.
+        """
+        point_p = 'P585'
+        start_p = 'P580'
+        end_p = 'P582'
+        if not years:
+            return
+
+        if '--' in years:
+            year_from, _, year_to = years.partition('--')
+            if helpers.is_pos_int(year_from) and helpers.is_pos_int(year_to):
+                if year_from != year_to:
+                    (
+                        statement
+                        .addQualifier(WdS.Qualifier(start_p, year_from))
+                        .addQualifier(WdS.Qualifier(end_p, year_to))
+                    )
+                else:
+                    statement.addQualifier(WdS.Qualifier(point_p, year_to))
+            else:
+                raise UnexpectedValueError(source, years)
+        else:
+            if helpers.is_pos_int(years):
+                statement.addQualifier(WdS.Qualifier(point_p, years))
+            else:
+                raise UnexpectedValueError(source, years)

@@ -136,7 +136,7 @@ class SwbBot(WfdBot):
         Make a label object from the available info.
 
         surfaceWaterBodyName always gives the English name but may also be
-        set to 'not applicable'
+        set to 'not applicable' (per p.33 of the WFD specifications).
 
         :param data: dict of data for a single swb
         :return: label dict
@@ -149,38 +149,17 @@ class SwbBot(WfdBot):
 
     def create_new_swb_item(self, data):
         """
-        Create a new swb item with some basic info and return.
-
-        The new item is created with a label, descriptions and
-        an eu_swb_code claim. This allows the item to be found in a second
-        pass should the script crash before adding the protoclaims.
-
-        The eu_swb_code is added without reference (this is handled
-        during the protoclaim stage)
-        The added label is in english per p.33 of the WFD specifications.
-        The protoclaim stage should recognise that the label has already been
-        added and thus not add it again.
+        Create a new swb item with some basic info and return it.
 
         :param data: dict of data for a single swb
         :return: pywikibot.ItemPage
         """
-        labels = WfdBot.convert_language_dict_to_json(
-            self.make_labels(data), typ='labels')
-        desc = WfdBot.convert_language_dict_to_json(
-            self.make_descriptions(self.descriptions), typ='descriptions')
-        claim = self.wd.make_simple_claim(
+        labels = self.make_labels(data)
+        desc = self.make_descriptions(self.descriptions)
+        id_claim = self.wd.make_simple_claim(
             self.eu_swb_p, data.get('euSurfaceWaterBodyCode'))
 
-        item_data = {
-            "labels": labels,
-            "descriptions": desc,
-            "claims": [claim.toJSON(), ]
-        }
-
-        try:
-            return self.wd.make_new_item(item_data, EDIT_SUMMARY)
-        except pywikibot.data.api.APIError as e:
-            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
+        self.create_new_item(labels, desc, id_claim, EDIT_SUMMARY)
 
     def make_protoclaims(self, data):
         """

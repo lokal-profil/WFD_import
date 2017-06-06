@@ -203,7 +203,6 @@ class RbdBot(WfdBot):
         """Make a description object from the available info.
 
         :param entry_data: dict with the data for the rbd
-        :param country: country code
         :return: dict
         """
         description_type = self.descriptions.get('national')

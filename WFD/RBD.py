@@ -133,7 +133,7 @@ class RbdBot(WfdBot):
             if rbd_code in self.rbd_id_items.keys():
                 item = self.wd.QtoItemPage(self.rbd_id_items[rbd_code])
             elif self.new:
-                item = self.create_new_rbd_item(entry_data, country)
+                item = self.create_new_rbd_item(entry_data)
             else:
                 # skip non existant if not self.new
                 continue
@@ -150,27 +150,19 @@ class RbdBot(WfdBot):
             # increment counter
             count += 1
 
-    def create_new_rbd_item(self, entry_data, country):
-        """Make a new rbd item.
-
-        :param entry_data: dict with the data for the rbd
-        :param country: country code
+    def create_new_rbd_item(self, entry_data):
         """
-        labels = WfdBot.convert_language_dict_to_json(
-            self.make_labels(entry_data), typ='labels')
-        desc = WfdBot.convert_language_dict_to_json(
-            self.make_descriptions(entry_data), typ='descriptions')
+        Create a new rbd item with some basic info and return it.
 
-        item_data = {
-            'labels': labels,
-            'descriptions': desc
-        }
+        :param entry_data: dict of data for a single rbd
+        :return: pywikibot.ItemPage
+        """
+        labels = self.make_labels(entry_data)
+        desc = self.make_descriptions(entry_data)
+        id_claim = self.wd.make_simple_claim(
+            self.eu_rbd_p, entry_data.get('euRBDCode'))
 
-        summary = 'Creating new RBD item with #WFDdata'
-        try:
-            return self.wd.make_new_item(item_data, summary)
-        except pywikibot.data.api.APIError as e:
-            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
+        self.create_new_item(labels, desc, id_claim, EDIT_SUMMARY)
 
     def make_labels(self, entry_data, with_alias=False):
         """

@@ -18,18 +18,22 @@ from __future__ import unicode_literals
 import pywikibot
 
 import wikidataStuff.helpers as helpers
-import wikidataStuff.wdqsLookup as wdqsLookup
+import wikidataStuff.WdqToWdqs as WdqToWdqs
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 from WFD.WFDBase import WfdBot
+from WFD.PreviewItem import PreviewItem
 
 parameter_help = """\
 RBDbot options (may be omitted):
+-year              Year to which the WFD data applies.
 -new               if present new items are created on Wikidata, otherwise
                    only updates are processed.
 -in_file           path to the data file
 -mappings          path to the mappings file (if not "mappings.json")
 -cutoff            number items to process before stopping (if not then all)
+-preview_file      path to a file where previews should be outputted, sets the
+                   run to demo mode
 
 Can also handle any pywikibot options. Most importantly:
 -simulate          don't write to database
@@ -43,9 +47,11 @@ EDIT_SUMMARY = 'importing #RBD using data from #WFD'
 class RbdBot(WfdBot):
     """Bot to enrich/create info on Wikidata for RBD objects."""
 
-    def __init__(self, mappings, year, new=False, cutoff=None):
+    def __init__(self, mappings, year, new=False, cutoff=None,
+                 preview_file=None):
         """Initialise the RbdBot."""
-        super(RbdBot, self).__init__(mappings, year, new, cutoff, EDIT_SUMMARY)
+        super(RbdBot, self).__init__(mappings, year, new, cutoff,
+                                     EDIT_SUMMARY, preview_file=preview_file)
 
         self.rbd_q = 'Q132017'
         self.eu_rbd_p = 'P2965'
@@ -59,7 +65,7 @@ class RbdBot(WfdBot):
 
     def load_existing_rbd(self):
         """Load existing RBD items and check all have unique ids."""
-        item_ids = wdqsLookup.make_claim_wdqs_search(
+        item_ids = WdqToWdqs.make_claim_wdqs_search(
             'P31', q_value=self.rbd_q, optional_props=[self.eu_rbd_p, ])
 
         # invert and check existence and uniqueness
@@ -132,25 +138,40 @@ class RbdBot(WfdBot):
             item = None
             if rbd_code in self.rbd_id_items.keys():
                 item = self.wd.QtoItemPage(self.rbd_id_items[rbd_code])
-            elif self.new:
-                item = self.create_new_rbd_item(entry_data)
-            else:
-                # skip non existant if not self.new
-                continue
-            item.exists()
 
-            labels = self.make_labels(entry_data, with_alias=True)
-            descriptions = self.make_descriptions(entry_data)
-            protoclaims = self.make_protoclaims(
-                entry_data, self.countries.get(country).get('qId'))
+            if item or self.new:
+                self.process_single_rbd(entry_data, item, country)
+                count += 1
+
+    def process_single_rbd(self, data, item, country):
+        """
+        Process a rbd (whether item exists or not).
+
+        :param data: dict of data for a single rbd
+        :param item: Wikidata item associated with a rbd, or None if one
+            should be created.
+        :param country: the country code as a string
+        """
+        if not self.demo:
+            item = item or self.create_new_rbd_item(data, country)
+            item.exists()  # load the item contents
+
+        # Determine claims
+        labels = self.make_labels(data, with_alias=True)
+        descriptions = self.make_descriptions(data)
+        protoclaims = self.make_protoclaims(
+            data, self.countries.get(country).get('qId'))
+
+        # Upload claims
+        if self.demo:
+            self.preview_data.append(
+                PreviewItem(labels, descriptions, protoclaims, item, self.ref))
+        else:
             self.commit_labels(labels, item)
             self.commit_descriptions(descriptions, item)
             self.commit_claims(protoclaims, item)
 
-            # increment counter
-            count += 1
-
-    def create_new_rbd_item(self, entry_data):
+    def create_new_rbd_item(self, entry_data, country):
         """
         Create a new rbd item with some basic info and return it.
 
@@ -274,6 +295,7 @@ class RbdBot(WfdBot):
         in_file = None
         new = False
         cutoff = None
+        preview_file = None
         year = '2016'
 
         # Load pywikibot args and handle local args
@@ -290,6 +312,8 @@ class RbdBot(WfdBot):
                 year = value
             elif option == '-cutoff':
                 cutoff = int(value)
+            elif option == '-preview_file':
+                preview_file = value
 
         # require in_file
         if not in_file:
@@ -298,10 +322,14 @@ class RbdBot(WfdBot):
         # load mappings and initialise RBD object
         mappings = helpers.load_json_file(mappings, force_path)
         data = WfdBot.load_data(in_file, key='RBDSUCA')
-        rbd = RbdBot(mappings, year, new=new, cutoff=cutoff)
+        rbd = RbdBot(mappings, year, new=new, cutoff=cutoff,
+                     preview_file=preview_file)
         rbd.set_common_values(data)
 
         rbd.process_all_rbd(data)
+
+        if rbd.demo:
+            rbd.output_previews()
 
 
 if __name__ == "__main__":

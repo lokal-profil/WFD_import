@@ -20,6 +20,7 @@ import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 from WFD.WFDBase import WfdBot, UnmappedValueError, UnexpectedValueError
+from WFD.PreviewItem import PreviewItem
 
 parameter_help = """\
 SwbBot options (may be omitted):
@@ -29,6 +30,8 @@ SwbBot options (may be omitted):
 -in_file           path to the data file
 -mappings          path to the mappings file (if not "mappings.json")
 -cutoff            number items to process before stopping (if not then all)
+-preview_file      path to a file where previews should be outputted, sets the
+                   run to demo mode
 
 Can also handle any pywikibot options. Most importantly:
 -simulate          don't write to database
@@ -42,7 +45,8 @@ EDIT_SUMMARY = 'importing #SWB using data from #WFD'
 class SwbBot(WfdBot):
     """Bot to enrich/create info on Wikidata for SWB objects."""
 
-    def __init__(self, mappings, year, new=False, cutoff=None):
+    def __init__(self, mappings, year, new=False, cutoff=None,
+                 preview_file=None):
         """
         Initialise the SwbBot.
 
@@ -53,7 +57,7 @@ class SwbBot(WfdBot):
             being interpreted as all.
         """
         super(SwbBot, self).__init__(mappings, year, new, cutoff,
-                                     EDIT_SUMMARY)
+                                     EDIT_SUMMARY, preview_file=preview_file)
 
         self.eu_swb_p = 'P2856'  # eu_cd
         self.eu_rbd_p = 'P2965'  # euRBDCode
@@ -80,7 +84,7 @@ class SwbBot(WfdBot):
         """
         super(SwbBot, self).set_common_values(data)
         try:
-            rbd_q = self.rbd_items.get[data.get('euRBDCode')]
+            rbd_q = self.rbd_items.get(data.get('euRBDCode'))
             self.rbd = self.wd.QtoItemPage(rbd_q)
         except KeyError:
             raise UnmappedValueError('online rbd objects',
@@ -118,8 +122,9 @@ class SwbBot(WfdBot):
         :param item: Wikidata item associated with a swb, or None if one
             should be created.
         """
-        item = item or self.create_new_swb_item(data)
-        item.exists()  # load the item contents
+        if not self.demo:
+            item = item or self.create_new_swb_item(data)
+            item.exists()  # load the item contents
 
         # Determine claims
         labels = self.make_labels(data)
@@ -127,9 +132,13 @@ class SwbBot(WfdBot):
         protoclaims = self.make_protoclaims(data)
 
         # Upload claims
-        self.commit_labels(labels, item)
-        self.commit_descriptions(descriptions, item)
-        self.commit_claims(protoclaims, item)
+        if self.demo:
+            self.preview_data.append(
+                PreviewItem(labels, descriptions, protoclaims, item, self.ref))
+        else:
+            self.commit_labels(labels, item)
+            self.commit_descriptions(descriptions, item)
+            self.commit_claims(protoclaims, item)
 
     def make_labels(self, data):
         """
@@ -213,12 +222,18 @@ class SwbBot(WfdBot):
         """
         # @todo: Support for UNKN, OTHE (somevalue) + NOTA, NOSI (novalue)
         claims = []
-        for impact in data.get('swSignificantImpactType'):
+        impacts = helpers.listify(data.get('swSignificantImpactType'))
+        for impact in impacts:
             impact = impact.split(' - ')[0]
             impact_q = self.impact_types.get(impact)
-            claims.append(
-                WdS.Statement(self.wd.QtoItemPage(impact_q)).addQualifier(
-                    WdS.Qualifier('P585', self.year)))
+            if impact_q.startswith('Q'):
+                claims.append(
+                    WdS.Statement(self.wd.QtoItemPage(impact_q)).addQualifier(
+                        WdS.Qualifier('P585', self.year)))
+            else:  # novalue/somevalue
+                claims.append(
+                    WdS.Statement(impact_q, special=True).addQualifier(
+                        WdS.Qualifier('P585', self.year)))
         if not claims:
             # none were added for this year
             claims.append(
@@ -261,6 +276,9 @@ class SwbBot(WfdBot):
 
         return claim
 
+    # @todo: unify arg_handling by breaking this out into
+    #        options = WfdBot.handle_args(args) which returns a dict.
+    #        also move parameter_help.
     @staticmethod
     def main(*args):
         """Command line entry point."""
@@ -269,6 +287,7 @@ class SwbBot(WfdBot):
         in_file = None
         new = False
         cutoff = None
+        preview_file = None
         year = '2016'
 
         # Load pywikibot args and handle local args
@@ -285,6 +304,8 @@ class SwbBot(WfdBot):
                 year = value
             elif option == '-cutoff':
                 cutoff = int(value)
+            elif option == '-preview_file':
+                preview_file = value
 
         # require in_file
         if not in_file:
@@ -296,10 +317,14 @@ class SwbBot(WfdBot):
         validate_indata(data, mappings)
 
         # initialise SwbBot object
-        bot = SwbBot(mappings, year, new=new, cutoff=cutoff)
+        bot = SwbBot(mappings, year, new=new, cutoff=cutoff,
+                     preview_file=preview_file)
         bot.set_common_values(data)
 
-        bot.process_all_swb(data)
+        bot.process_all_swb(data.get('SurfaceWaterBody'))
+
+        if bot.demo:
+            bot.output_previews()
 
 
 def validate_indata(data, mappings):
@@ -311,6 +336,8 @@ def validate_indata(data, mappings):
     """
     # validate mapping of each <surfaceWaterBodyCategory> and
     # <swSignificantImpactType>
+    pywikibot.output('Target file containes {} entries, validating...'.format(
+        len(data.get('SurfaceWaterBody'))))
     swb_cats = set()
     impacts = set()
     for swb in data.get('SurfaceWaterBody'):
@@ -324,6 +351,8 @@ def validate_indata(data, mappings):
     WfdBot.validate_mapping(
         mappings.get('swSignificantImpactType'), impacts,
         'swSignificantImpactType')
+
+    pywikibot.output('Validation successful')
 
 
 if __name__ == "__main__":

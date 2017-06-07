@@ -3,7 +3,6 @@
 """Generate a preview of a single updated/created wfd item."""
 # Based on PreviewTable by Alicia Fagerving
 from __future__ import unicode_literals
-from builtins import dict
 
 import pywikibot
 
@@ -35,6 +34,7 @@ class PreviewItem(object):
         self.ref = ref
 
     def make_preview_page(self):
+        """Create a preview of the entire PreviewItem."""
         txt = ''
         txt += '{key}:\n{data}\n\n'.format(
             key=PreviewItem.make_text_bold('Labels'),
@@ -51,10 +51,11 @@ class PreviewItem(object):
             data=PreviewItem.format_reference(self.ref))
         txt += '{key}:\n{data}\n\n'.format(
             key=PreviewItem.make_text_bold('Claims'),
-            data=self.make_preview_table())
+            data=self.format_protoclaims())
         return txt
 
-    def make_preview_table(self):
+    def format_protoclaims(self):
+        """Create a preview table for the protoclaims."""
         table_head = (
             "{| class='wikitable'\n"
             "|-\n"

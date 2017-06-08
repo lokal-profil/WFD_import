@@ -57,7 +57,9 @@
         "NUTR": "Q12203192",
         "ORGA": "Q28854984",
         "SALI": "Q2002254",
-        "TEMP": "Q2914309"
+        "TEMP": "Q2914309",
+        "NOTA": "novalue",
+        "OTHE": "somevalue"
     },
     "swEcologicalStatusOrPotentialValue": {
         "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swEcologicalStatusOrPotentialValue",

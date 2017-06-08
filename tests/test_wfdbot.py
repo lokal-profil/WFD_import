@@ -122,7 +122,7 @@ class TestConvertLanguageDictToJson(unittest.TestCase):
             {}
         )
 
-    def test_convert_language_dict_to_json_singel(self):
+    def test_convert_language_dict_to_json_single(self):
         expected = {
             'en': {
                 'language': 'en',

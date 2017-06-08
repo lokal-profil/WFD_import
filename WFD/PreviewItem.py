@@ -37,7 +37,7 @@ class PreviewItem(object):
         """Create a preview of the entire PreviewItem."""
         txt = ''
         txt += '{key}:\n{data}\n\n'.format(
-            key=PreviewItem.make_text_bold('Labels|Aliases'),
+            key=PreviewItem.make_text_bold('Labels | Aliases'),
             data=self.format_labels())
         txt += '{key}:\n{data}\n\n'.format(
             key=PreviewItem.make_text_bold('Descriptions'),
@@ -179,7 +179,7 @@ class PreviewItem(object):
                 labels = [PreviewItem.make_text_italics(labels[0])] + \
                     labels[1:]
                 preview += '* {}: {}\n'.format(
-                    PreviewItem.make_text_bold(lang), '|'.join(labels))
+                    PreviewItem.make_text_bold(lang), ' | '.join(labels))
         return preview
 
     def format_descriptions(self):

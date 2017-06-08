@@ -222,6 +222,37 @@ class WfdBot(object):
             descriptions[lang] = desc
         return descriptions
 
+    def create_new_item(self, labels, desc, id_claim, summary):
+        """
+        Create a new item with some basic info and return it.
+
+        The new item is created with labels, descriptions and an id claim.
+        This allows the item to be found in a second pass should the script
+        crash before adding further claims.
+
+        The id claim need not contain a reference (this can be handled
+        during the later stages).
+
+        :param labels: a label dictionary
+        :param desc: a description dictionary
+        :param id_claim: a pywikibot.Claim adding the unique id to the item
+        :param summary: to use for the edit
+        :return: pywikibot.ItemPage
+        """
+        labels = WfdBot.convert_language_dict_to_json(labels, typ='labels')
+        desc = WfdBot.convert_language_dict_to_json(desc, typ='descriptions')
+
+        item_data = {
+            "labels": labels,
+            "descriptions": desc,
+            "claims": [id_claim.toJSON(), ]
+        }
+
+        try:
+            return self.wd.make_new_item(item_data, summary)
+        except pywikibot.data.api.APIError as e:
+            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
+
     @staticmethod
     def load_xml_url_data(url, key=None):
         """

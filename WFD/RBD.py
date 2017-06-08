@@ -152,25 +152,17 @@ class RbdBot(WfdBot):
 
     def create_new_rbd_item(self, entry_data):
         """
-        Make a new rbd item.
+        Create a new rbd item with some basic info and return it.
 
-        :param entry_data: dict with the data for the rbd
+        :param entry_data: dict of data for a single rbd
+        :return: pywikibot.ItemPage
         """
-        labels = WfdBot.convert_language_dict_to_json(
-            self.make_labels(entry_data), typ='labels')
-        desc = WfdBot.convert_language_dict_to_json(
-            self.make_descriptions(entry_data), typ='descriptions')
+        labels = self.make_labels(entry_data)
+        desc = self.make_descriptions(entry_data)
+        id_claim = self.wd.make_simple_claim(
+            self.eu_rbd_p, entry_data.get('euRBDCode'))
 
-        item_data = {
-            'labels': labels,
-            'descriptions': desc
-        }
-
-        summary = 'Creating new RBD item with #WFDdata'
-        try:
-            return self.wd.make_new_item(item_data, summary)
-        except pywikibot.data.api.APIError as e:
-            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
+        self.create_new_item(labels, desc, id_claim, EDIT_SUMMARY)
 
     def make_labels(self, entry_data, with_alias=False):
         """

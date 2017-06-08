@@ -86,12 +86,13 @@ class RbdBot(WfdBot):
         """Check that the description are available for all languages."""
         WfdBot.validate_mapping(self.descriptions, self.langs, 'descriptions')
 
-    def check_all_competent_authorities(self, data, country):
-        """Check that all competent authorities are mapped.
-
-        :param data: dict of all the rbds in the country with euRBDCode as keys
-        :param country: name of the country
+    def check_all_competent_authorities(self, data):
         """
+        Check that all competent authorities are mapped.
+
+        :param data: RBDSUCA component of the xml data
+        """
+        data = helpers.listify(data.get('RBD'))  # list of rbds in the country
         found_ca = []
         for d in data:
             found_ca.append(d['primeCompetentAuthority'])
@@ -99,37 +100,13 @@ class RbdBot(WfdBot):
         WfdBot.validate_mapping(self.competent_authorities, found_ca,
                                 'CompetentAuthority')
 
-    def check_country(self, country):
-        """Check that the country is mapped and that languages are available.
-
-        :param country: name of the country
+    def process_all_rbd(self, data):
         """
-        country_data = self.countries.get(country)
-        if not country_data:
-            raise pywikibot.Error(
-                "The country code \"{}\" was not mapped.".format(country))
-        if not country_data.get('qId'):
-            raise pywikibot.Error(
-                "The country code \"{}\" was not mapped to Wikidata.".format(
-                    country))
+        Handle every single RBD in a datafile (within one country).
 
-        diff = set(self.langs) - set(country_data.keys())
-        if diff:
-            raise pywikibot.Error(
-                'The following languages should be mapped for country {} '
-                'before continuing: {}'.format(country, ', '.join(diff)))
-
-    def process_country_rbd(self, country, data):
-        """Handle the RBDs of a single country.
-
-        :param country: the country code as a string
-        :param data: dict of all the rbds in the country with euRBDCode as keys
+        :param data: list of all the rbds in the country
         """
-        # check if CA in self.competent_authorities else raise error
-        self.check_country(country)
-        self.check_all_competent_authorities(data, country)
-
-        # identify euRBDCode and check if it is in self.rbd_id_items
+        data = helpers.listify(data)
         count = 0
         for entry_data in data:
             if self.cutoff and count >= self.cutoff:
@@ -140,27 +117,25 @@ class RbdBot(WfdBot):
                 item = self.wd.QtoItemPage(self.rbd_id_items[rbd_code])
 
             if item or self.new:
-                self.process_single_rbd(entry_data, item, country)
+                self.process_single_rbd(entry_data, item)
                 count += 1
 
-    def process_single_rbd(self, data, item, country):
+    def process_single_rbd(self, data, item):
         """
         Process a rbd (whether item exists or not).
 
         :param data: dict of data for a single rbd
         :param item: Wikidata item associated with a rbd, or None if one
             should be created.
-        :param country: the country code as a string
         """
         if not self.demo:
-            item = item or self.create_new_rbd_item(data, country)
+            item = item or self.create_new_rbd_item(data)
             item.exists()  # load the item contents
 
         # Determine claims
         labels = self.make_labels(data, with_alias=True)
         descriptions = self.make_descriptions(data)
-        protoclaims = self.make_protoclaims(
-            data, self.countries.get(country).get('qId'))
+        protoclaims = self.make_protoclaims(data)
 
         # Upload claims
         if self.demo:
@@ -171,7 +146,7 @@ class RbdBot(WfdBot):
             self.commit_descriptions(descriptions, item)
             self.commit_claims(protoclaims, item)
 
-    def create_new_rbd_item(self, entry_data, country):
+    def create_new_rbd_item(self, entry_data):
         """
         Create a new rbd item with some basic info and return it.
 
@@ -224,7 +199,7 @@ class RbdBot(WfdBot):
 
         return super(RbdBot, self).make_descriptions(description_type)
 
-    def make_protoclaims(self, entry_data, country_q):
+    def make_protoclaims(self, entry_data):
         """
         Construct potential claims for an entry.
 
@@ -242,7 +217,6 @@ class RbdBot(WfdBot):
         }
 
         :param entry_data: dict with the data for the rbd per above
-        :param country_q: q_id for the coutnry
         """
         protoclaims = {}
         #   P31: self.rbd_q
@@ -251,9 +225,8 @@ class RbdBot(WfdBot):
         #   self.eu_rbd_p: euRBDCode
         protoclaims[self.eu_rbd_p] = WdS.Statement(
             entry_data['euRBDCode'])
-        #   P17: country (via self.countries)
-        protoclaims['P17'] = WdS.Statement(
-            self.wd.QtoItemPage(country_q))
+        #   P17: country
+        protoclaims['P17'] = WdS.Statement(self.country)
         #   P137: primeCompetentAuthority (via self.competent_authorities)
         protoclaims['P137'] = WdS.Statement(
             self.wd.QtoItemPage(
@@ -265,27 +238,18 @@ class RbdBot(WfdBot):
                                  unit=self.area_unit, site=self.wd.repo))
         return protoclaims
 
-    # @todo: merge this with process_country_rbd and remove duplication
-    #        with WfdBot.set_common_values()
-    def process_all_rbd(self, data):
-        """Handle every single RBD in a datafile."""
-        wfd_year_datasets = self.mappings.get('dataset').get(self.year)
+    def set_common_values(self, data):
+        """
+        Set and validate values shared by every RBD in the dataset.
 
+        :param data: RBDSUCA component of the xml data
+        """
+        super(RbdBot, self).set_common_values(data)
         # Check that all descriptions are present
         self.check_all_descriptions()
 
-        # Find the country code in mappings (skip if not found)
-        country = data.get('countryCode')
-        # per schema "Code of the language of the file" but it isn't
-        # language = data.get('@language')
-
-        # Make a Reference (or possibly one per country)
-        self.dataset_q = wfd_year_datasets[country]
-        self.ref = self.make_ref(data)
-
-        # Send rbd data for the country onwards
-        self.process_country_rbd(
-            country, helpers.listify(data.get('RBD')))
+        # check if CA in self.competent_authorities else raise error
+        self.check_all_competent_authorities(data)
 
     @staticmethod
     def main(*args):
@@ -326,7 +290,7 @@ class RbdBot(WfdBot):
                      preview_file=preview_file)
         rbd.set_common_values(data)
 
-        rbd.process_all_rbd(data)
+        rbd.process_all_rbd(data.get('RBD'))
 
         if rbd.demo:
             rbd.output_previews()

@@ -80,7 +80,7 @@ class SwbBot(WfdBot):
         """
         Set and validate values shared by every SWB in the dataset.
 
-        :param data: dict of all the SWB:s in the RBD
+        :param data: SWB component of thexml data
         """
         super(SwbBot, self).set_common_values(data)
         try:
@@ -99,8 +99,9 @@ class SwbBot(WfdBot):
 
         Only increments counter when an swb is updated.
 
-        :param data: dict of all the swb:s in the RBD
+        :param data: list of all the swb:s in the RBD
         """
+        data = helpers.listify(data)
         count = 0
         for entry_data in data:
             if self.cutoff and count >= self.cutoff:
@@ -279,6 +280,7 @@ class SwbBot(WfdBot):
     # @todo: unify arg_handling by breaking this out into
     #        options = WfdBot.handle_args(args) which returns a dict.
     #        also move parameter_help.
+    #        separate mappings_file and actual mappings
     @staticmethod
     def main(*args):
         """Command line entry point."""

@@ -95,7 +95,6 @@ class WfdBot(object):
         self.language = None
         self.descriptions = None
 
-    # @todo: implement in RBD (partially done but should remove old uses)
     def set_common_values(self, data):
         """
         Set and validate values shared by every instance of the batch.

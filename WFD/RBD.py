@@ -252,11 +252,10 @@ class RbdBot(WfdBot):
                                  unit=self.area_unit, site=self.wd.repo))
         return protoclaims
 
+    # @todo: merge this with process_country_rbd and remove duplication
+    #        with WfdBot.set_common_values()
     def process_all_rbd(self, data):
-        """Handle every single RBD in a datafile.
-
-        @todo: Adapt to multi country data
-        """
+        """Handle every single RBD in a datafile."""
         wfd_year_datasets = self.mappings.get('dataset').get(self.year)
 
         # Check that all descriptions are present
@@ -308,6 +307,7 @@ class RbdBot(WfdBot):
         mappings = helpers.load_json_file(mappings, force_path)
         data = WfdBot.load_data(in_file, key='RBDSUCA')
         rbd = RbdBot(mappings, year, new=new, cutoff=cutoff)
+        rbd.set_common_values(data)
 
         rbd.process_all_rbd(data)
 

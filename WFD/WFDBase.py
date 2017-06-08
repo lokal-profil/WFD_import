@@ -67,7 +67,7 @@ class WfdBot(object):
         self.language = None
         self.descriptions = None
 
-    # @todo: implement in RBD
+    # @todo: implement in RBD (partially done but should remove old uses)
     def set_common_values(self, data):
         """
         Set and validate values shared by every instance of the batch.
@@ -110,9 +110,9 @@ class WfdBot(object):
 
     def commit_descriptions(self, descriptions, item):
         """
-        Add description to item.
+        Add descriptions to item.
 
-        :param description: description object
+        :param descriptions: description object
         :param item: item to add descriptions to
         """
         if descriptions:

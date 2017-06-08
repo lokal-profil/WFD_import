@@ -133,7 +133,7 @@ class RbdBot(WfdBot):
             if rbd_code in self.rbd_id_items.keys():
                 item = self.wd.QtoItemPage(self.rbd_id_items[rbd_code])
             elif self.new:
-                item = self.create_new_rbd_item(entry_data, country)
+                item = self.create_new_rbd_item(entry_data)
             else:
                 # skip non existant if not self.new
                 continue
@@ -150,11 +150,11 @@ class RbdBot(WfdBot):
             # increment counter
             count += 1
 
-    def create_new_rbd_item(self, entry_data, country):
-        """Make a new rbd item.
+    def create_new_rbd_item(self, entry_data):
+        """
+        Make a new rbd item.
 
         :param entry_data: dict with the data for the rbd
-        :param country: country code
         """
         labels = WfdBot.convert_language_dict_to_json(
             self.make_labels(entry_data), typ='labels')

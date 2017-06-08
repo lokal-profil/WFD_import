@@ -118,20 +118,34 @@ class SwbBot(WfdBot):
         :param item: Wikidata item associated with a swb, or None if one
             should be created.
         """
-        bad_names = ('not applicable', )  # known (lower case) non-names
         item = item or self.create_new_swb_item(data)
         item.exists()  # load the item contents
 
         # Determine claims
-        name = data.get('surfaceWaterBodyName')  # in English per page 33
-        if name and name.lower() in bad_names:
-            name = None
+        labels = self.make_labels(data)
+        descriptions = self.make_descriptions(self.descriptions)
         protoclaims = self.make_protoclaims(data)
 
         # Upload claims
-        if name:
-            self.wd.addLabelOrAlias('en', name, item)
+        self.commit_labels(labels, item)
+        self.commit_descriptions(descriptions, item)
         self.commit_claims(protoclaims, item)
+
+    def make_labels(self, data):
+        """
+        Make a label object from the available info.
+
+        surfaceWaterBodyName always gives the English name but may also be
+        set to 'not applicable'
+
+        :param data: dict of data for a single swb
+        :return: label dict
+        """
+        labels = {}
+        name = data.get('surfaceWaterBodyName')
+        if name and name.lower() not in self.bad_names:
+            labels['en'] = name
+        return labels
 
     def create_new_swb_item(self, data):
         """
@@ -150,23 +164,23 @@ class SwbBot(WfdBot):
         :param data: dict of data for a single swb
         :return: pywikibot.ItemPage
         """
-        name = data.get('surfaceWaterBodyName')
-        desc = self.make_descriptions(self.descriptions)
+        labels = WfdBot.convert_language_dict_to_json(
+            self.make_labels(data), typ='labels')
+        desc = WfdBot.convert_language_dict_to_json(
+            self.make_descriptions(self.descriptions), typ='descriptions')
         claim = self.wd.make_simple_claim(
             self.eu_swb_p, data.get('euSurfaceWaterBodyCode'))
 
         item_data = {
-            "labels": {
-                "en": {
-                    "language": "en",
-                    "value": name
-                }
-            },
+            "labels": labels,
             "descriptions": desc,
             "claims": [claim.toJSON(), ]
         }
 
-        return self.wd.make_new_item(item_data, EDIT_SUMMARY)
+        try:
+            return self.wd.make_new_item(item_data, EDIT_SUMMARY)
+        except pywikibot.data.api.APIError as e:
+            raise pywikibot.Error('Error during item creation: {:s}'.format(e))
 
     def make_protoclaims(self, data):
         """

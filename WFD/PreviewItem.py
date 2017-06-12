@@ -94,7 +94,7 @@ class PreviewItem(object):
                 table += table_row.format(
                     prop=prop,
                     value=PreviewItem.format_itis(statement),
-                    quals='\n'.join(quals),
+                    quals=' \n'.join(quals),
                     references=''  # self.ref  # re-add if multiple references
                 )
 
@@ -155,7 +155,7 @@ class PreviewItem(object):
         if isinstance(itis, pywikibot.ItemPage):
             return PreviewItem.make_wikidata_template(itis)
         elif special:
-            PreviewItem.make_wikidata_template(itis, special=True)
+            return PreviewItem.make_wikidata_template(itis, special=True)
         elif isinstance(itis, pywikibot.WbQuantity):
             unit = itis.get_unit_item() or ''
             amount = itis.amount
@@ -234,7 +234,8 @@ class PreviewItem(object):
             wd_id = wd_entry
 
         typ = None
-        if wd_id.startswith('Q') or wd_id.startswith('P'):
+        if helpers.is_str(wd_id) and (
+                wd_id.startswith('Q') or wd_id.startswith('P')):
             typ = wd_id[0]
         elif special:
             typ = "Q'"

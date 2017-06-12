@@ -227,7 +227,7 @@ class TestFormatItis(BasicFormatMocker):
         self.mock_format_timestring.return_value = 'formatted_WbTime'
         self.addCleanup(timestring_patcher.stop)
 
-    def test_format_itis_None(self):
+    def test_format_itis_none(self):
         itis = None
         expected = 'None'
         self.assertEqual(PreviewItem.format_itis(itis), expected)
@@ -242,7 +242,7 @@ class TestFormatItis(BasicFormatMocker):
         self.mock_format_timestring.assert_not_called()
 
     def test_format_itis_quantity(self):
-        itis = pywikibot.WbQuantity(123)
+        itis = pywikibot.WbQuantity(123, site=self.repo)
         expected = '123'
         self.assertEqual(PreviewItem.format_itis(itis), expected)
         self.mock_wd_template.assert_not_called()
@@ -250,7 +250,7 @@ class TestFormatItis(BasicFormatMocker):
 
     def test_format_itis_quantity_unit(self):
         unit = pywikibot.ItemPage(self.repo, 'Q123')
-        itis = pywikibot.WbQuantity(123, unit=unit)
+        itis = pywikibot.WbQuantity(123, unit=unit, site=self.repo)
         expected = '123 wd_template_1'
         self.assertEqual(PreviewItem.format_itis(itis), expected)
         self.mock_wd_template.assert_called_once_with(unit)

@@ -333,7 +333,7 @@ class WfdBot(object):
                 value = '[{}]'.format(', '.join(sorted(diff)))
                 raise UnmappedValueError(label, value)
 
-    # @todo: Move to WikidataStuff.helpers?
+    # @todo: T167661 Move to WikidataStuff.helpers?
     @staticmethod
     def convert_language_dict_to_json(data, typ):
         """

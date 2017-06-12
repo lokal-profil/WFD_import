@@ -59,7 +59,9 @@
         "SALI": "Q2002254",
         "TEMP": "Q2914309",
         "NOTA": "novalue",
-        "OTHE": "somevalue"
+        "NOSI": "novalue",
+        "OTHE": "somevalue",
+        "UNKN": "somevalue"
     },
     "swEcologicalStatusOrPotentialValue": {
         "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swEcologicalStatusOrPotentialValue",

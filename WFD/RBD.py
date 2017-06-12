@@ -120,6 +120,7 @@ class RbdBot(WfdBot):
                 self.process_single_rbd(entry_data, item)
                 count += 1
 
+    # @todo: T167662
     def process_single_rbd(self, data, item):
         """
         Process a rbd (whether item exists or not).
@@ -251,6 +252,7 @@ class RbdBot(WfdBot):
         # check if CA in self.competent_authorities else raise error
         self.check_all_competent_authorities(data)
 
+    # @todo: T167658
     @staticmethod
     def main(*args):
         """Command line entry point."""

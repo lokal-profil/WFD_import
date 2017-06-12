@@ -115,6 +115,7 @@ class SwbBot(WfdBot):
                 self.process_single_swb(entry_data, item)
                 count += 1
 
+    # @todo: T167662
     def process_single_swb(self, data, item):
         """
         Process a swb (whether item exists or not).
@@ -221,7 +222,6 @@ class SwbBot(WfdBot):
         :param data: dict of data for a single swb
         :return: [Statement]
         """
-        # @todo: Support for UNKN, OTHE (somevalue) + NOTA, NOSI (novalue)
         claims = []
         impacts = helpers.listify(data.get('swSignificantImpactType'))
         for impact in impacts:
@@ -273,14 +273,11 @@ class SwbBot(WfdBot):
 
         if claim:
             claim.addQualifier(WdS.Qualifier('P585', self.year))
-            # @todo: handle measurement years https://www.wikidata.org/wiki/Wikidata:Project_chat#Date_qualifiers  # noqa E501
+            # @todo: T167660 for measurement years as qualifier
 
         return claim
 
-    # @todo: unify arg_handling by breaking this out into
-    #        options = WfdBot.handle_args(args) which returns a dict.
-    #        also move parameter_help.
-    #        separate mappings_file and actual mappings
+    # @todo: T167658
     @staticmethod
     def main(*args):
         """Command line entry point."""

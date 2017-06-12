@@ -8,24 +8,24 @@ import pywikibot
 
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
-# @todo: Generalise and move to WikidataStuff
-# @todo: If ref gets tied to a Statement then ref handling gets significantly
-#        simplified and must no longer be one for all.
+# @todo: T167661 Generalise and move to WikidataStuff
+# @todo: T161116 If ref gets tied to a Statement then ref handling gets
+#        significantly simplified and must no longer be one for all.
 
 
 class PreviewItem(object):
     """Base bot to enrich Wikidata with info from WFD."""
 
-    def __init__(self, labels, descriptions, protoclaims, item, ref):
+    def __init__(self, labels, descriptions, protoclaims, item, ref=None):
         """
         Initialise the PreviewItem.
 
-        :param labels: dict holding the label/aliases per language
-        :param descriptions: dict holding the descriptions per language
-        :param protoclaims: dict of Statements per Property
-        :param item: the item to which the data should be added
+        :param labels: dict holding the label/aliases per language code
+        :param descriptions: dict holding the descriptions per language code
+        :param protoclaims: dict of Statements per property-id
+        :param item: the pywikibot.ItemPage to which the data should be added
             (None for a new item)
-        :param ref: the ref which is attached to every single item
+        :param ref: a Reference which is attached to every single item
         """
         self.labels_dict = labels
         self.desc_dict = descriptions
@@ -46,14 +46,17 @@ class PreviewItem(object):
             key=PreviewItem.make_text_bold('Matching item'),
             data=self.format_item())
         # remove this next one if multiple references
-        txt += '{key}:\n{data}\n\n'.format(
-            key=PreviewItem.make_text_bold('Reference (same for all claims)'),
-            data=PreviewItem.format_reference(self.ref))
+        if self.ref:
+            txt += '{key}:\n{data}\n\n'.format(
+                key=PreviewItem.make_text_bold(
+                    'Reference (same for all claims)'),
+                data=PreviewItem.format_reference(self.ref))
         txt += '{key}:\n{data}\n\n'.format(
             key=PreviewItem.make_text_bold('Claims'),
             data=self.format_protoclaims())
         return txt
 
+    # @todo: T167663
     def format_protoclaims(self):
         """Create a preview table for the protoclaims."""
         table_head = (

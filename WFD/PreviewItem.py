@@ -24,7 +24,7 @@ class PreviewItem(object):
 
         :param labels: dict holding the label/aliases per language code
         :param descriptions: dict holding the descriptions per language code
-        :param protoclaims: dict of Statements per property-id
+        :param protoclaims: dict of Statements per (P-prefixed) property-id
         :param item: the pywikibot.ItemPage to which the data should be added
             (None for a new item)
         :param ref: a Reference which is attached to every single item
@@ -35,8 +35,11 @@ class PreviewItem(object):
         self.desc_dict = OrderedDict(
             sorted(descriptions.items(), key=lambda t: t[0]))
         self.item = item
+
+        # sort by the numeric part of the property id
         self.protoclaims = OrderedDict(
-            sorted(protoclaims.items(), key=lambda t: t[0]))
+            sorted(protoclaims.items(), key=lambda t: int(t[0][1:])))
+
         self.ref = ref
 
     def make_preview_page(self):

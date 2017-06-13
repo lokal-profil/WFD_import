@@ -591,7 +591,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
         itis_2 = WdS.Statement('bar')
         protoclaims = {'P123': itis_1, 'P321': itis_2}
         self.preview_item.protoclaims = OrderedDict(
-            sorted(protoclaims.items(), key=lambda t: t[0]))
+            sorted(protoclaims.items(), key=lambda t: int(t[0][1:])))
         expected = (
             "{| class='wikitable'\n"
             "|-\n"

@@ -21,25 +21,9 @@ import wikidataStuff.helpers as helpers
 import wikidataStuff.WdqToWdqs as WdqToWdqs
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFD.WFDBase import WfdBot
+from WFD.WFDBase import parameter_help, WfdBot
 from WFD.PreviewItem import PreviewItem
 
-parameter_help = """\
-RBDbot options (may be omitted):
--year              Year to which the WFD data applies.
--new               if present new items are created on Wikidata, otherwise
-                   only updates are processed.
--in_file           path to the data file
--mappings          path to the mappings file (if not "mappings.json")
--cutoff            number items to process before stopping (if not then all)
--preview_file      path to a file where previews should be outputted, sets the
-                   run to demo mode
-
-Can also handle any pywikibot options. Most importantly:
--simulate          don't write to database
--dir               directory in which user_config is located
--help              output all available options
-"""
 docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = 'importing #RBD using data from #WFD'
 
@@ -252,44 +236,18 @@ class RbdBot(WfdBot):
         # check if CA in self.competent_authorities else raise error
         self.check_all_competent_authorities(data)
 
-    # @todo: T167658
     @staticmethod
     def main(*args):
         """Command line entry point."""
-        mappings = 'mappings.json'
-        force_path = __file__
-        in_file = None
-        new = False
-        cutoff = None
-        preview_file = None
-        year = '2016'
-
-        # Load pywikibot args and handle local args
-        for arg in pywikibot.handle_args(args):
-            option, sep, value = arg.partition(':')
-            if option == '-in_file':
-                in_file = value
-            elif option == '-mappings':
-                mappings = value
-                force_path = None
-            elif option == '-new':
-                new = True
-            elif option == '-year':
-                year = value
-            elif option == '-cutoff':
-                cutoff = int(value)
-            elif option == '-preview_file':
-                preview_file = value
-
-        # require in_file
-        if not in_file:
-            raise pywikibot.Error('An in_file must be specified')
+        options = WfdBot.handle_args(args)
 
         # load mappings and initialise RBD object
-        mappings = helpers.load_json_file(mappings, force_path)
-        data = WfdBot.load_data(in_file, key='RBDSUCA')
-        rbd = RbdBot(mappings, year, new=new, cutoff=cutoff,
-                     preview_file=preview_file)
+        mappings = helpers.load_json_file(
+            options['mappings'], options['force_path'])
+        data = WfdBot.load_data(options['in_file'], key='RBDSUCA')
+        rbd = RbdBot(mappings, options['year'], new=options['new'],
+                     cutoff=options['cutoff'],
+                     preview_file=options['preview_file'])
         rbd.set_common_values(data)
 
         rbd.process_all_rbd(data.get('RBD'))

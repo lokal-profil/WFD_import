@@ -19,25 +19,14 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
-from WFD.WFDBase import WfdBot, UnmappedValueError, UnexpectedValueError
+from WFD.WFDBase import (
+    parameter_help,
+    UnmappedValueError,
+    UnexpectedValueError,
+    WfdBot
+)
 from WFD.PreviewItem import PreviewItem
 
-parameter_help = """\
-SwbBot options (may be omitted):
--year              Year to which the WFD data applies.
--new               if present new items are created on Wikidata, otherwise
-                   only updates are processed.
--in_file           path to the data file
--mappings          path to the mappings file (if not "mappings.json")
--cutoff            number items to process before stopping (if not then all)
--preview_file      path to a file where previews should be outputted, sets the
-                   run to demo mode
-
-Can also handle any pywikibot options. Most importantly:
--simulate          don't write to database
--dir               directory in which user_config is located
--help              output all available options
-"""
 docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = 'importing #SWB using data from #WFD'
 
@@ -277,47 +266,21 @@ class SwbBot(WfdBot):
 
         return claim
 
-    # @todo: T167658
     @staticmethod
     def main(*args):
         """Command line entry point."""
-        mappings = 'mappings.json'
-        force_path = __file__
-        in_file = None
-        new = False
-        cutoff = None
-        preview_file = None
-        year = '2016'
-
-        # Load pywikibot args and handle local args
-        for arg in pywikibot.handle_args(args):
-            option, sep, value = arg.partition(':')
-            if option == '-in_file':
-                in_file = value
-            elif option == '-mappings':
-                mappings = value
-                force_path = None
-            elif option == '-new':
-                new = True
-            elif option == '-year':
-                year = value
-            elif option == '-cutoff':
-                cutoff = int(value)
-            elif option == '-preview_file':
-                preview_file = value
-
-        # require in_file
-        if not in_file:
-            raise pywikibot.Error('An in_file must be specified')
+        options = WfdBot.handle_args(args)
 
         # load and validate data and mappings
-        mappings = helpers.load_json_file(mappings, force_path)
-        data = WfdBot.load_data(in_file, key='SWB')
+        mappings = helpers.load_json_file(
+            options['mappings'], options['force_path'])
+        data = WfdBot.load_data(options['in_file'], key='SWB')
         validate_indata(data, mappings)
 
         # initialise SwbBot object
-        bot = SwbBot(mappings, year, new=new, cutoff=cutoff,
-                     preview_file=preview_file)
+        bot = SwbBot(mappings, options['year'], new=options['new'],
+                     cutoff=options['cutoff'],
+                     preview_file=options['preview_file'])
         bot.set_common_values(data)
 
         bot.process_all_swb(data.get('SurfaceWaterBody'))

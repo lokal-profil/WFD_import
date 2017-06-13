@@ -167,6 +167,7 @@ class PreviewItem(object):
         else:
             return str(itis)
 
+    # @todo: T167791
     def format_labels(self):
         """
         Create a label(s) preview.
@@ -206,7 +207,7 @@ class PreviewItem(object):
         if self.item:
             return PreviewItem.make_wikidata_template(self.item)
         else:
-            return 'New item created'
+            return '–'  # New item created
 
     @staticmethod
     def make_text_bold(text):

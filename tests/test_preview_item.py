@@ -141,7 +141,7 @@ class TestMakeWikidataTemplate(unittest.TestCase):
             PreviewItem.make_wikidata_template('dummy', special=True)
         self.assertEqual(
             str(cm.exception),
-            'Sorry but "dummy" is not a recognized special value/snacktype.'
+            'Sorry but "dummy" is not a recognized special value/snaktype.'
         )
 
 
@@ -153,7 +153,7 @@ class TestFormatItem(TestPreviewItemBase):
         self.preview_item.item = None
         self.assertEqual(
             self.preview_item.format_item(),
-            'New item created'
+            '–'
         )
 
     def test_format_item_with_item(self):

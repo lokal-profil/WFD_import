@@ -4,6 +4,8 @@
 # Based on PreviewTable by Alicia Fagerving
 from __future__ import unicode_literals
 
+from collections import OrderedDict
+
 import pywikibot
 
 import wikidataStuff.helpers as helpers
@@ -27,10 +29,14 @@ class PreviewItem(object):
             (None for a new item)
         :param ref: a Reference which is attached to every single item
         """
-        self.labels_dict = labels
-        self.desc_dict = descriptions
+        # sort dicts by key to ensure consistent behaviour
+        self.labels_dict = OrderedDict(
+            sorted(labels.items(), key=lambda t: t[0]))
+        self.desc_dict = OrderedDict(
+            sorted(descriptions.items(), key=lambda t: t[0]))
         self.item = item
-        self.protoclaims = protoclaims
+        self.protoclaims = OrderedDict(
+            sorted(protoclaims.items(), key=lambda t: t[0]))
         self.ref = ref
 
     def make_preview_page(self):

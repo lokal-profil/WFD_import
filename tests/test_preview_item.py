@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import unittest
 from mock import mock
+from collections import OrderedDict
 
 import pywikibot
 
@@ -171,10 +172,12 @@ class TestFormatDescriptions(TestPreviewItemBase):
         self.assertEqual(self.preview_item.format_descriptions(), '')
 
     def test_make_wikidata_template_with_data(self):
-        self.preview_item.desc_dict = {
+        descriptions = {
             'en': 'en_desc',
             'sv': 'sv_desc'
         }
+        self.preview_item.desc_dict = OrderedDict(
+            sorted(descriptions.items(), key=lambda t: t[0]))
         expected = (
             '* bold_en: en_desc\n'
             '* bold_sv: sv_desc\n'
@@ -192,10 +195,12 @@ class TestFormatLabels(TestPreviewItemBase):
         self.assertEqual(self.preview_item.format_labels(), '')
 
     def test_format_labels_with_multiple_langs(self):
-        self.preview_item.labels_dict = {
+        labels = {
             'en': ['en_label'],
             'sv': ['sv_label']
         }
+        self.preview_item.labels_dict = OrderedDict(
+            sorted(labels.items(), key=lambda t: t[0]))
         expected = (
             '* bold_en: italics_en_label\n'
             '* bold_sv: italics_sv_label\n'
@@ -584,7 +589,9 @@ class TestFormatProtoclaims(TestPreviewItemBase):
     def test_format_protoclaims_multple_different_prop(self):
         itis_1 = WdS.Statement('foo')
         itis_2 = WdS.Statement('bar')
-        self.preview_item.protoclaims = {'P123': itis_1, 'P321': itis_2}
+        protoclaims = {'P123': itis_1, 'P321': itis_2}
+        self.preview_item.protoclaims = OrderedDict(
+            sorted(protoclaims.items(), key=lambda t: t[0]))
         expected = (
             "{| class='wikitable'\n"
             "|-\n"

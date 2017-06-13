@@ -80,7 +80,7 @@ class SwbBot(WfdBot):
         """
         Set and validate values shared by every SWB in the dataset.
 
-        :param data: SWB component of thexml data
+        :param data: SWB component of the xml data
         """
         super(SwbBot, self).set_common_values(data)
         try:
@@ -97,9 +97,9 @@ class SwbBot(WfdBot):
         """
         Handle all the surface water bodies in a single RBD.
 
-        Only increments counter when an swb is updated.
+        Only increments counter when an SWB is updated.
 
-        :param data: list of all the swb:s in the RBD
+        :param data: list of all the SWBs in the RBD or a single SWB.
         """
         data = helpers.listify(data)
         count = 0
@@ -118,10 +118,10 @@ class SwbBot(WfdBot):
     # @todo: T167662
     def process_single_swb(self, data, item):
         """
-        Process a swb (whether item exists or not).
+        Process a SWB (whether item exists or not).
 
-        :param data: dict of data for a single swb
-        :param item: Wikidata item associated with a swb, or None if one
+        :param data: dict of data for a single SWB
+        :param item: Wikidata item associated with a SWB, or None if one
             should be created.
         """
         if not self.demo:
@@ -149,7 +149,7 @@ class SwbBot(WfdBot):
         surfaceWaterBodyName always gives the English name but may also be
         set to 'not applicable' (per p.33 of the WFD specifications).
 
-        :param data: dict of data for a single swb
+        :param data: dict of data for a single SWB
         :return: label dict
         """
         labels = {}
@@ -160,9 +160,9 @@ class SwbBot(WfdBot):
 
     def create_new_swb_item(self, data):
         """
-        Create a new swb item with some basic info and return it.
+        Create a new SWB item with some basic info and return it.
 
-        :param data: dict of data for a single swb
+        :param data: dict of data for a single SWB
         :return: pywikibot.ItemPage
         """
         labels = self.make_labels(data)
@@ -176,7 +176,7 @@ class SwbBot(WfdBot):
         """
         Construct potential claims for an entry.
 
-        :param data: dict of data for a single swb
+        :param data: dict of data for a single SWB
         """
         protoclaims = dict()
 
@@ -219,7 +219,7 @@ class SwbBot(WfdBot):
                  of time point?
                * In both cases the reference can still be added.
 
-        :param data: dict of data for a single swb
+        :param data: dict of data for a single SWB
         :return: [Statement]
         """
         claims = []
@@ -254,7 +254,7 @@ class SwbBot(WfdBot):
         Sets the 'somevalue' statement if the status is "Unknown".
         Skips if the value is "Not applicable".
 
-        :param data: dict of data for a single swb
+        :param data: dict of data for a single SWB
         :return: Statement
         """
         claim = None
@@ -335,7 +335,7 @@ def validate_indata(data, mappings):
     """
     # validate mapping of each <surfaceWaterBodyCategory> and
     # <swSignificantImpactType>
-    pywikibot.output('Target file containes {} entries, validating...'.format(
+    pywikibot.output('Target file contains {} entries, validating...'.format(
         len(data.get('SurfaceWaterBody'))))
     swb_cats = set()
     impacts = set()

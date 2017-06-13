@@ -14,7 +14,7 @@
         }
     },
     "dataset": {
-        "@meta": "The item corresponding to the country wfd dataset for that year",
+        "@meta": "The item corresponding to the country WFD dataset for that year",
         "2016": {
             "FI": "Q29380097",
             "SE": "Q29563137"

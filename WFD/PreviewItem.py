@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-"""Generate a preview of a single updated/created wfd item."""
+"""Generate a preview of a single updated/created WFD item."""
 # Based on PreviewTable by Alicia Fagerving
 from __future__ import unicode_literals
 
@@ -14,7 +14,7 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 
 class PreviewItem(object):
-    """Base bot to enrich Wikidata with info from WFD."""
+    """A visualization of a single created/updated WFD item."""
 
     def __init__(self, labels, descriptions, protoclaims, item, ref=None):
         """
@@ -223,7 +223,8 @@ class PreviewItem(object):
         """
         Make a wikidata template for items and properties.
 
-        :param item: a Q/P prefixed item/property id or a ItemPage/PropertyPage
+        :param wd_entry: a Q/P prefixed item/property id or an
+            ItemPage/PropertyPage
         :param special: if it is a special type of value
             (i.e. novalue, somevalue)
         :return: string
@@ -247,7 +248,7 @@ class PreviewItem(object):
             else:
                 raise ValueError(
                     'Sorry but "{}" is not a recognized special '
-                    'value/snacktype.'.format(wd_id))
+                    'value/snaktype.'.format(wd_id))
         else:
             raise ValueError(
                 'Sorry only items and properties are supported, not whatever '

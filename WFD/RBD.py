@@ -92,7 +92,7 @@ class RbdBot(WfdBot):
 
         :param data: RBDSUCA component of the xml data
         """
-        data = helpers.listify(data.get('RBD'))  # list of rbds in the country
+        data = helpers.listify(data.get('RBD'))  # list of RBDs in the country
         found_ca = []
         for d in data:
             found_ca.append(d['primeCompetentAuthority'])
@@ -104,7 +104,7 @@ class RbdBot(WfdBot):
         """
         Handle every single RBD in a datafile (within one country).
 
-        :param data: list of all the rbds in the country
+        :param data: list of all the RBDs in the country or a single RBD.
         """
         data = helpers.listify(data)
         count = 0
@@ -123,10 +123,10 @@ class RbdBot(WfdBot):
     # @todo: T167662
     def process_single_rbd(self, data, item):
         """
-        Process a rbd (whether item exists or not).
+        Process an RBD (whether item exists or not).
 
-        :param data: dict of data for a single rbd
-        :param item: Wikidata item associated with a rbd, or None if one
+        :param data: dict of data for a single RBD
+        :param item: Wikidata item associated with an RBD, or None if one
             should be created.
         """
         if not self.demo:
@@ -149,9 +149,9 @@ class RbdBot(WfdBot):
 
     def create_new_rbd_item(self, entry_data):
         """
-        Create a new rbd item with some basic info and return it.
+        Create a new RBD item with some basic info and return it.
 
-        :param entry_data: dict of data for a single rbd
+        :param entry_data: dict of data for a single RBD
         :return: pywikibot.ItemPage
         """
         labels = self.make_labels(entry_data)
@@ -174,7 +174,7 @@ class RbdBot(WfdBot):
         @todo Figure out how to handle internationalRBDName (which can be in
               other languages, or a duplicate, or different English).
 
-        :param entry_data: dict with the data for the rbd
+        :param entry_data: dict with the data for the RBD
         :param with_alias: add RBDcode to list of names
         """
         labels = {}
@@ -191,7 +191,7 @@ class RbdBot(WfdBot):
     def make_descriptions(self, entry_data):
         """Make a description object from the available info.
 
-        :param entry_data: dict with the data for the rbd
+        :param entry_data: dict with the data for the RBD
         :return: dict
         """
         description_type = self.descriptions.get('national')
@@ -217,7 +217,7 @@ class RbdBot(WfdBot):
             "subUnitsDefined": "No"
         }
 
-        :param entry_data: dict with the data for the rbd per above
+        :param entry_data: dict with the data for the RBD per above
         """
         protoclaims = {}
         #   P31: self.rbd_q
@@ -233,7 +233,7 @@ class RbdBot(WfdBot):
             self.wd.QtoItemPage(
                 self.competent_authorities[
                     entry_data['primeCompetentAuthority']]))
-        #   P2046: rbdArea + self.area_unit (can I set unknown accuracy)
+        #   P2046: rbdArea + self.area_unit
         protoclaims['P2046'] = WdS.Statement(
             pywikibot.WbQuantity(entry_data['rbdArea'],
                                  unit=self.area_unit, site=self.wd.repo))

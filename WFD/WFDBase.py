@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Base class on which to build WFD import bots."""
 from __future__ import unicode_literals
-from builtins import dict
+from builtins import dict, open
 import requests
 import xmltodict
 import datetime
@@ -54,7 +54,8 @@ class UnexpectedValueError(pywikibot.Error):
 class WfdBot(object):
     """Base bot to enrich Wikidata with info from WFD."""
 
-    def __init__(self, mappings, year, new, cutoff, edit_summary):
+    def __init__(self, mappings, year, new, cutoff, edit_summary,
+                 preview_file=None):
         """
         Initialise the WfdBot.
 
@@ -65,6 +66,8 @@ class WfdBot(object):
             being interpreted as all.
         :param edit_summary: string to append to all automatically generated
             edit summaries
+        :param preview_file: run in demo mode (create previews rather than
+            live edits) and output the result to this file.
         """
         self.repo = pywikibot.Site().data_repository()
         self.wd = WdS(self.repo, edit_summary)
@@ -72,6 +75,12 @@ class WfdBot(object):
         self.cutoff = cutoff
         self.mappings = mappings
         self.year = year
+        self.preview_file = preview_file
+        if preview_file:
+            self.demo = True
+        else:
+            self.demo = False
+        self.preview_data = []
 
         # known (lower case) non-names
         self.bad_names = ('not applicable', )
@@ -86,7 +95,6 @@ class WfdBot(object):
         self.language = None
         self.descriptions = None
 
-    # @todo: implement in RBD (partially done but should remove old uses)
     def set_common_values(self, data):
         """
         Set and validate values shared by every instance of the batch.
@@ -253,6 +261,14 @@ class WfdBot(object):
         except pywikibot.data.api.APIError as e:
             raise pywikibot.Error('Error during item creation: {:s}'.format(e))
 
+    def output_previews(self):
+        """Output any PreviewItems to the preview_file."""
+        with open(self.preview_file, 'w', encoding='utf-8') as f:
+            for preview in self.preview_data:
+                f.write(preview.make_preview_page())
+                f.write('--------------\n\n')
+        pywikibot.output('Created "{}" for previews'.format(self.preview_file))
+
     @staticmethod
     def load_xml_url_data(url, key=None):
         """
@@ -317,7 +333,7 @@ class WfdBot(object):
                 value = '[{}]'.format(', '.join(sorted(diff)))
                 raise UnmappedValueError(label, value)
 
-    # @todo: Move to WikidataStuff.helpers?
+    # @todo: T167661 Move to WikidataStuff.helpers?
     @staticmethod
     def convert_language_dict_to_json(data, typ):
         """

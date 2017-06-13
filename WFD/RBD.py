@@ -70,7 +70,7 @@ class RbdBot(WfdBot):
 
         # invert and check existence and uniqueness
         rbd_id_items = {}
-        for q_id, values in item_ids.iteritems():
+        for q_id, values in item_ids.items():
             eu_rbd_code = values.get(self.eu_rbd_p)
             if not eu_rbd_code:
                 raise pywikibot.Error(

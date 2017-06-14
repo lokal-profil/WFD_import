@@ -12,6 +12,23 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
+parameter_help = """\
+WfdBot options (may be omitted unless otherwise mentioned):
+-in_file           path to the data file (Required)
+-year              year to which the WFD data applies.
+-new               if present new items are created on Wikidata, otherwise
+                   only updates are processed.
+-mappings          path to the mappings file (if not "mappings.json")
+-cutoff            number items to process before stopping (if not then all)
+-preview_file      path to a file where previews should be outputted, sets the
+                   run to demo mode
+
+Can also handle any pywikibot options. Most importantly:
+-simulate          don't write to database
+-dir               directory in which user_config is located
+-help              output all available options
+"""
+
 
 class UnmappedValueError(pywikibot.Error):
     """Error when encountering values which need to be manually mapped."""
@@ -333,6 +350,48 @@ class WfdBot(object):
             if diff:
                 value = '[{}]'.format(', '.join(sorted(diff)))
                 raise UnmappedValueError(label, value)
+
+    @staticmethod
+    def handle_args(args):
+        """
+        Parse and load all of the basic arguments.
+
+        Also passes any needed arguments on to pywikibot and sets any defaults.
+
+        :param args: list of arguments to be handled
+        :return: dict of options
+        """
+        options = {
+            'mappings': 'mappings.json',
+            'force_path': __file__,
+            'in_file': None,
+            'new': False,
+            'cutoff': None,
+            'preview_file': None,
+            'year': '2016'
+        }
+
+        for arg in pywikibot.handle_args(args):
+            option, sep, value = arg.partition(':')
+            if option == '-in_file':
+                options['in_file'] = value
+            elif option == '-mappings':
+                options['mappings'] = value
+                options['force_path'] = None
+            elif option == '-new':
+                options['new'] = True
+            elif option == '-year':
+                options['year'] = value
+            elif option == '-cutoff':
+                options['cutoff'] = int(value)
+            elif option == '-preview_file':
+                options['preview_file'] = value
+
+        # require in_file
+        if not options.get('in_file'):
+            raise pywikibot.Error('An in_file must be specified')
+
+        return options
 
     # @todo: T167661 Move to WikidataStuff.helpers?
     @staticmethod

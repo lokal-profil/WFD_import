@@ -120,6 +120,10 @@ class SwbBot(WfdBot):
         """
         Process a SWB (whether item exists or not).
 
+        Descriptions are only added for newly created items to avoid confusion
+        between the administrative SWB and the often coinciding geographical
+        body of water.
+
         :param data: dict of data for a single SWB
         :param item: Wikidata item associated with a SWB, or None if one
             should be created.
@@ -139,7 +143,7 @@ class SwbBot(WfdBot):
                 PreviewItem(labels, descriptions, protoclaims, item, self.ref))
         else:
             self.commit_labels(labels, item)
-            self.commit_descriptions(descriptions, item)
+            # self.commit_descriptions(descriptions, item)
             self.commit_claims(protoclaims, item)
 
     def make_labels(self, data):
@@ -206,7 +210,7 @@ class SwbBot(WfdBot):
         """
         Construct statements for swSignificantImpactType data.
 
-        Uses self.year as timepoint.
+        Uses self.wbtime_year as timepoint.
 
         Sets the 'novalue' statement if there are no impact types in the data.
 
@@ -230,23 +234,24 @@ class SwbBot(WfdBot):
             if impact_q.startswith('Q'):
                 claims.append(
                     WdS.Statement(self.wd.QtoItemPage(impact_q)).addQualifier(
-                        WdS.Qualifier('P585', self.year)))
+                        WdS.Qualifier('P585', self.wbtime_year)))
             else:  # novalue/somevalue
                 claims.append(
                     WdS.Statement(impact_q, special=True).addQualifier(
-                        WdS.Qualifier('P585', self.year)))
+                        WdS.Qualifier('P585', self.wbtime_year)))
         if not claims:
             # none were added for this year
             claims.append(
                 WdS.Statement('novalue', special=True).addQualifier(
-                    WdS.Qualifier('P585', self.year)))
+                    WdS.Qualifier('P585', self.wbtime_year)))
         return claims
 
     def make_general_ecological_status(self, data):
         """
         Construct statements for swEcologicalStatusOrPotentialValue data.
 
-        Uses self.year as timepoint (for the year the status was decided).
+        Uses self.wbtime_year as timepoint (for the year the status was
+        decided).
 
         swEcologicalAssessmentYear gives the year, or range for which the
         data was collected/assesments made.
@@ -272,7 +277,7 @@ class SwbBot(WfdBot):
                 'swEcologicalStatusOrPotentialValue', raw_val)
 
         if claim:
-            claim.addQualifier(WdS.Qualifier('P585', self.year))
+            claim.addQualifier(WdS.Qualifier('P585', self.wbtime_year))
             # @todo: T167660 for measurement years as qualifier
 
         return claim

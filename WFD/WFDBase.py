@@ -60,7 +60,7 @@ class WfdBot(object):
         Initialise the WfdBot.
 
         :param mappings: dict holding data for any offline mappings
-        :param year: year of the report (used to date certain statements.
+        :param year: year of the report (used to date certain statements).
         :param new: whether to also create new items
         :param cutoff: the number of items to process before stopping. None
             being interpreted as all.
@@ -75,6 +75,7 @@ class WfdBot(object):
         self.cutoff = cutoff
         self.mappings = mappings
         self.year = year
+        self.wbtime_year = helpers.iso_to_WbTime(year)
         self.preview_file = preview_file
         if preview_file:
             self.demo = True
@@ -158,7 +159,7 @@ class WfdBot(object):
             raise NotImplementedError(
                 'self.ref must be set by the class inheriting WfdBot')
 
-        for pc_prop, pc_value in protoclaims.iteritems():
+        for pc_prop, pc_value in protoclaims.items():
             if pc_value:
                 if isinstance(pc_value, list):
                     pc_value = set(pc_value)  # eliminate potential duplicates

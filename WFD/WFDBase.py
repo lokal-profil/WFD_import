@@ -286,7 +286,7 @@ class WfdBot(object):
             lang = self.mappings.get('languageCode').get(lang_code)
             names = feature_data.get('name')
             if names:
-                names_list = [name.strip() for name in names.split('/')]
+                names_list = [name.strip() for name in names.split(' / ')]
                 labels[lang] = labels.get(lang) or []
                 labels[lang].extend(names_list)
 

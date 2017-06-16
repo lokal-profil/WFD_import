@@ -6,8 +6,8 @@ Bot to import and source statements about River Basin Districts.
 Author: Lokal_Profil
 License: MIT
 
-@todo: Follow up creation by ensuring that each CA has the corresponding RBD
-    as it's P2541
+@todo: T168174: Follow up creation by ensuring that each CA has the
+       corresponding RBD as its P2541.
 
 usage:
     python RBD.py [OPTIONS]

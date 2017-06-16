@@ -284,10 +284,11 @@ class WfdBot(object):
             feature_data = self.gml_data['features'].get(code)
             lang_code = feature_data.get('lang')
             lang = self.mappings.get('languageCode').get(lang_code)
-            name = feature_data.get('name')
-            if name:
+            names = feature_data.get('name')
+            if names:
+                names_list = [name.strip() for name in names.split(' / ')]
                 labels[lang] = labels.get(lang) or []
-                labels[lang].append(name)
+                labels[lang].extend(names_list)
 
     def create_new_item(self, labels, desc, id_claim, summary):
         """

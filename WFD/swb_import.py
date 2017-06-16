@@ -35,7 +35,7 @@ class SwbBot(WfdBot):
     """Bot to enrich/create info on Wikidata for SWB objects."""
 
     def __init__(self, mappings, year, new=False, cutoff=None,
-                 preview_file=None):
+                 gml_data=None, preview_file=None):
         """
         Initialise the SwbBot.
 
@@ -46,7 +46,8 @@ class SwbBot(WfdBot):
             being interpreted as all.
         """
         super(SwbBot, self).__init__(mappings, year, new, cutoff,
-                                     EDIT_SUMMARY, preview_file=preview_file)
+                                     EDIT_SUMMARY, gml_data=gml_data,
+                                     preview_file=preview_file)
 
         self.eu_swb_p = 'P2856'  # eu_cd
         self.eu_rbd_p = 'P2965'  # euRBDCode
@@ -149,6 +150,8 @@ class SwbBot(WfdBot):
         name = data.get('surfaceWaterBodyName')
         if name and name.lower() not in self.bad_names:
             labels['en'] = name
+
+        self.add_local_name(labels, data.get('euSurfaceWaterBodyCode'))
         return labels
 
     def create_new_swb_item(self, data):
@@ -275,16 +278,20 @@ class SwbBot(WfdBot):
     def main(*args):
         """Command line entry point."""
         options = WfdBot.handle_args(args)
+        gml_data = None
 
         # load and validate data and mappings
         mappings = helpers.load_json_file(
             options['mappings'], options['force_path'])
         data = WfdBot.load_data(options['in_file'], key='SWB')
+        if options['gml_file']:
+            gml_data = WfdBot.load_gml_data(
+                options['gml_file'], 'wfdgml:SurfaceWaterBody')
         validate_indata(data, mappings)
 
         # initialise SwbBot object
         bot = SwbBot(mappings, options['year'], new=options['new'],
-                     cutoff=options['cutoff'],
+                     cutoff=options['cutoff'], gml_data=gml_data,
                      preview_file=options['preview_file'])
         bot.set_common_values(data)
 

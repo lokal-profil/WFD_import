@@ -24,6 +24,10 @@
         "fin": "fi",
         "swe": "sv"
     },
+    "units": {
+        "@meta": "gml unit abbreviations mapped to helpers.get_unit_q() abbreviations",
+        "km2": "km²"
+    },
     "CompetentAuthority": {
         "SE1": "Q25386488",
         "SE2": "Q26236748",

@@ -14,12 +14,13 @@ from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 
 parameter_help = """\
 WfdBot options (may be omitted unless otherwise mentioned):
--in_file           path to the data file (Required)
+-in_file           [Required]path to the data file (local .json or online .xml)
 -year              year to which the WFD data applies.
 -new               if present new items are created on Wikidata, otherwise
                    only updates are processed.
 -mappings          path to the mappings file (if not "mappings.json")
 -cutoff            number items to process before stopping (if not then all)
+-gml_file          path to the gml file (local .json or online .gml)
 -preview_file      path to a file where previews should be outputted, sets the
                    run to demo mode
 
@@ -72,7 +73,7 @@ class WfdBot(object):
     """Base bot to enrich Wikidata with info from WFD."""
 
     def __init__(self, mappings, year, new, cutoff, edit_summary,
-                 preview_file=None):
+                 gml_data=None, preview_file=None):
         """
         Initialise the WfdBot.
 
@@ -83,6 +84,7 @@ class WfdBot(object):
             being interpreted as all.
         :param edit_summary: string to append to all automatically generated
             edit summaries
+        :param gml_data: dict holding data from a gml file, if provided
         :param preview_file: run in demo mode (create previews rather than
             live edits) and output the result to this file.
         """
@@ -93,6 +95,7 @@ class WfdBot(object):
         self.mappings = mappings
         self.year = year
         self.wbtime_year = helpers.iso_to_WbTime(year)
+        self.gml_data = gml_data
         self.preview_file = preview_file
         if preview_file:
             self.demo = True
@@ -141,6 +144,28 @@ class WfdBot(object):
             raise UnmappedValueError('languageCode', language)
 
         self.ref = self.make_ref(data)
+
+        if self.gml_data:
+            self.set_common_gml_values()
+
+    def set_common_gml_values(self):
+        """Validate the gml values and set a gml reference."""
+        # validate that language and units are mapped
+        langs = set()
+        units = set()
+        for key, feature in self.gml_data.get('features').items():
+            langs.add(feature.get('lang'))
+            units.add(feature.get('area_unit'))
+        # area_units are not guaranteed
+        if None in units:
+            units.remove(None)
+
+        WfdBot.validate_mapping(
+            self.mappings.get('languageCode'), langs, 'gml language codes')
+        WfdBot.validate_mapping(
+            self.mappings.get('units'), units, 'gml units')
+
+        self.gml_ref = self.make_ref(self.gml_data)
 
     def commit_labels(self, labels, item):
         """
@@ -248,6 +273,22 @@ class WfdBot(object):
             descriptions[lang] = desc
         return descriptions
 
+    def add_local_name(self, labels, code):
+        """
+        Add local names from gml data to label dict if gml is provided.
+
+        :param labels: dict of language-name pairs to which local name is added
+        :param code: the SWB or RBD identifier code
+        """
+        if self.gml_data:
+            feature_data = self.gml_data['features'].get(code)
+            lang_code = feature_data.get('lang')
+            lang = self.mappings.get('languageCode').get(lang_code)
+            name = feature_data.get('name')
+            if name:
+                labels[lang] = labels.get(lang) or []
+                labels[lang].append(name)
+
     def create_new_item(self, labels, desc, id_claim, summary):
         """
         Create a new item with some basic info and return it.
@@ -324,6 +365,53 @@ class WfdBot(object):
         return helpers.load_json_file(in_file)
 
     @staticmethod
+    def load_gml_data(in_file, feature_key):
+        """
+        Load data from a gml file.
+
+        This also repackages the features to ensure the structure is the same
+        for both RBDs and SWBs.
+
+        As there is no creation date in the data one needs to be extract
+        from the filename instead.
+
+        Ensures that the outputted data is compatible with make_ref().
+
+        :param in_file: a url to an .gml file or the path to a local .json
+            dump of the same file.
+        :param feature_key: key for the type of feature we are looking for.
+        :return: dict of the loaded data
+        """
+        raw_data = WfdBot.load_data(in_file, key='wfdgml:FeatureCollection')
+
+        # repackage features
+        gml_features = {}
+        for feature in raw_data['wfdgml:featureMember']:
+            feature_data = {}
+            entry_data = feature[feature_key]
+            feature_data['name'] = entry_data['wfdgml:nameText']
+            feature_data['lang'] = entry_data['wfdgml:nameLanguage']
+            feature_data['area'] = entry_data.get('wfdgml:sizeValue')
+            feature_data['area_unit'] = entry_data.get('wfdgml:sizeUom')
+            feature_data['int_name'] = entry_data.get(
+                'wfdgml:nameTextInternational')
+            eu_cd = entry_data['wfdgml:thematicIdIdentifier']
+            gml_features[eu_cd] = feature_data
+
+        # extract creation date from filename
+        date = raw_data['source_url'].rpartition('_')[2].rpartition('.')[0]
+        iso_date = '{yyyy}-{mm}-{dd}'.format(
+            yyyy=date[:4], mm=date[4:6], dd=date[6:])
+
+        data = {
+            'features': gml_features,
+            'source_url': raw_data['source_url'],
+            'retrieval_date': raw_data['retrieval_date'],
+            '@creationDate': iso_date
+        }
+        return data
+
+    @staticmethod
     def validate_mapping(found, expected, label):
         """
         Validate that all of the expected key are found in a given mapping.
@@ -368,7 +456,8 @@ class WfdBot(object):
             'new': False,
             'cutoff': None,
             'preview_file': None,
-            'year': '2016'
+            'year': '2016',
+            'gml_file': None
         }
 
         for arg in pywikibot.handle_args(args):
@@ -386,6 +475,8 @@ class WfdBot(object):
                 options['cutoff'] = int(value)
             elif option == '-preview_file':
                 options['preview_file'] = value
+            elif option == '-gml_file':
+                options['gml_file'] = value
 
         # require in_file
         if not options.get('in_file'):

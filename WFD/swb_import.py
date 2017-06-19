@@ -206,8 +206,8 @@ class SwbBot(WfdBot):
 
         Sets the 'novalue' statement if there are no impact types in the data.
 
-        @todo: This needs to be made aware of pre-existing claim to be able to
-               update the data. Specifically:
+        @todo: T168224 This needs to be made aware of pre-existing claim to be
+               able to update the data. Specifically:
                * If a claim was previously present but is not any more:
                  add an end time as qualifier to that value.
                * If a claim was previously present and still is:

@@ -1,33 +1,40 @@
 ## WFD_import
-*WFD import* are a collection of scripts and tools for batch importing of
+*WFD import* is a collection of scripts and tools for batch importing of
 European water data, reported under the Water Framework Directive, to Wikidata.
 
-It currently supports harvesting data on River Basin Districts (RBDs) and
-Surface Water Bodies (SWBs).
+It currently supports harvesting data on [River Basin Districts](https://www.wikidata.org/wiki/Q132017)
+(RBDs) and [Surface Water Bodies](https://www.wikidata.org/wiki/Q30092755) (SWBs).
 
 ### How to run
-To do a basic run simply call either `RBD.py` or `swb_import.py` from the
-commandline together with the `-in_file:<path>` argument. The `-in_file` <path>
-value should be the url to an RBDSUCA .xml file for a RBD import or an SWB
-file(there is one per RBD) for an SWB import.
+To do a basic run call either `RBD.py` or `swb_import.py` from the commandline
+together with the `-in_file:<path>` argument. The `-in_file` <path> value should
+be the url to an RBDSUCA .xml file for an RBD import or an SWB file (there is
+one per RBD) for an SWB import.
 
-The xml files only include the names of the RBD/SWB in English (if any), to
+The xml files only include the names of the RBD/SWB in English, if any. To
 load the names in a local language use the `-gml_file:<path>` argument together
 with the path to a .gml file belonging to the RBD or SWB dataset.
 
-You can also use the `WfdBot.load_data()` to create a json dump of either of
-the .xml or .gml files. The local json dumps can then be used together with the
-`-in_file` or `gml_file` argument.
+You can also use `WfdBot.load_data()` to create a json dump of either of the
+.xml or .gml files. The local json dumps can then be used together with the
+`-in_file` or `-gml_file` argument.
 
 To create new items, rather than just enriching pre-existing ones, use the
 `-new` flag. A new item is one where the unique RBD/SWB code is not yet
 associated with an item on Wikidata.
 
-To ensure no data is written to Wikidata you may use the `-simulate` flag. The
-`-preview_file:<path>` also prevents data from being written to Wikidata,
+To ensure no data is written to Wikidata you may use the `-simulate` flag which
+will raise an error if the scripts attempt to write to Wikidata.
+
+The `-preview_file:<path>` also prevents data from being written to Wikidata,
 instead outputting a preview of the data, in wikitext, to the file at the
-specified path. This can be combined with the `-cutoff:<num>` argument which
-limits the number of items being processed.
+specified path. See [this page](https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/preview)
+for an example.
+
+Preview can be combined with the `-cutoff:<num>` argument which limits the
+number of items being processed.
+
+The scripts also support any common Pywikibot flags. Use `-help` to get a list.
 
 ### Where to find the data files
 *Sweden is used as an example in all links below:*
@@ -42,16 +49,17 @@ The data can be found on the [Central Data Repository](https://cdr.eionet.europa
 * Both .gml files (one for RBDs and one for SWBs) are located under
   [*National spatial data*](https://cdr.eionet.europa.eu/se/eu/wfd2016/spatial/envwdqi7a/).
 
-It is worth nothing that there may be multiple releases of data (separate
-directories), always chose the most recent. For the .gml files it varies from
-country to country whether either of them are made accessible to the public.
+It is worth noting that there may be multiple releases of data, found in
+separate directories at CDR, so you should always choose the most recent one.
+For the .gml files it varies from country to country whether either of them are
+made accessible to the public.
 
 ### How to add a new country
 Before investing energy into adding support for a new country you should ensure
-that the license of the data is compatible with Wikidata (CC0). The default
-license on CDR is CC BY which is not free enough. You therefore need a
-source indicating that the member country released their data under a more
-permissive CC0 license.
+that the license of the data is compatible with Wikidata ([CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.en)).
+The default license on CDR is [CC BY](http://creativecommons.org/licenses/by/2.5/dk/deed.en_GB)
+which is not free enough. You therefore need a source indicating that the member
+country released their data under a more permissive CC0 license.
 
 * Create an item for the Report, and add to the "dataset" entry in
   `mappings.json`. See [the 2016 Sweden report](https://www.wikidata.org/wiki/Q29563137)
@@ -75,7 +83,7 @@ To import the data first run the RBD importer (with `-new` if needed) before
 running the SWB importer.
 
 ### Known issues and limitations
-The results are of curse limited by the data quality. If a country has not
+The results are of course limited by the data quality. If a country has not
 followed the guidelines on e.g. language labeling then imported data will also
 be wrong.
 
@@ -92,9 +100,10 @@ use of `nameTextInternational`). Although this is supposed to be an internationa
 Issues and bugs are tracked on [Phabricator](https://phabricator.wikimedia.org/tag/wmse-wfd-data-to-wikidata-2016/).
 
 ### Installation
-if `pip -r requirements.txt` does not work correctly you might have to add
+If `pip -r requirements.txt` does not work correctly you might have to add
 the `--process-dependency-links` flag to ensure you get the right version
-of pywikibot and [lokal-profil/wikidata-stuff](https://github.com/lokal-profil/wikidata-stuff).
+of [Pywikibot](https://github.com/wikimedia/pywikibot-core/) and
+[lokal-profil/wikidata-stuff](https://github.com/lokal-profil/wikidata-stuff).
 
 ### Note
 This repository was split off from 

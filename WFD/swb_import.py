@@ -196,6 +196,20 @@ class SwbBot(WfdBot):
         # P4002: swEcologicalStatusOrPotentialValue
         protoclaims['P4002'] = self.make_general_ecological_status(data)
 
+        # P2046: wfdgml:sizeValue + wfdgml:sizeUom
+        if self.gml_data:
+            feature_data = self.gml_data['features'].get(
+                data.get('euSurfaceWaterBodyCode'))
+            area_unit = pywikibot.ItemPage(
+                self.repo, helpers.get_unit_q(
+                    self.mappings.get('units').get(
+                        feature_data['area_unit'])))
+
+            statement = WdS.Statement(
+                pywikibot.WbQuantity(feature_data['area'],
+                                     unit=area_unit, site=self.wd.repo))
+            protoclaims['P2046'] = statement.add_reference(self.gml_ref)
+
         return protoclaims
 
     def make_significant_impact_type(self, data):

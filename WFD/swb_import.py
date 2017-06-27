@@ -202,8 +202,7 @@ class SwbBot(WfdBot):
                 data.get('euSurfaceWaterBodyCode'))
             area_unit = pywikibot.ItemPage(
                 self.repo, helpers.get_unit_q(
-                    self.mappings.get('units').get(
-                        feature_data['area_unit'])))
+                    feature_data['area_unit']))
 
             statement = WdS.Statement(
                 pywikibot.WbQuantity(feature_data['area'],

@@ -98,7 +98,8 @@ class PreviewItem(object):
 
                 ref = ''
                 if statement.ref:
-                    ref = PreviewItem.format_reference(statement.ref)
+                    ref = '\n{}'.format(
+                        PreviewItem.format_reference(statement.ref))
 
                 rows.append(
                     {

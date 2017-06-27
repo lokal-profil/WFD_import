@@ -659,7 +659,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
             '| wd_template_1 \n'
             '| formatted_itis_2 \n'
             '|  \n'
-            '| formatted_reference_1 \n'
+            '| \nformatted_reference_1 \n'
             "|}"
         )
         self.assertEqual(self.preview_item.format_protoclaims(), expected)
@@ -699,7 +699,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
             '| wd_template_1 \n'
             '| formatted_itis_2 \n'
             '|  \n'
-            '| formatted_reference_1 \n'
+            '| \nformatted_reference_1 \n'
             "|}"
         )
         self.assertEqual(self.preview_item.format_protoclaims(), expected)

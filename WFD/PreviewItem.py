@@ -11,8 +11,6 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
 # @todo: T167661 Generalise and move to WikidataStuff
-# @todo: T161116 If ref gets tied to a Statement then ref handling gets
-#        significantly simplified and must no longer be one for all.
 
 
 class PreviewItem(object):
@@ -27,7 +25,8 @@ class PreviewItem(object):
         :param protoclaims: dict of Statements per (P-prefixed) property-id
         :param item: the pywikibot.ItemPage to which the data should be added
             (None for a new item)
-        :param ref: a Reference which is attached to every single item
+        :param ref: a Reference which is attached to every single protoclaim,
+            unless overridden on a per statement basis.
         """
         # sort dicts by key to ensure consistent behaviour
         self.labels_dict = OrderedDict(
@@ -54,18 +53,17 @@ class PreviewItem(object):
         txt += '{key}: {data}\n\n'.format(
             key=PreviewItem.make_text_bold('Matching item'),
             data=self.format_item())
-        # remove this next one if multiple references
+
         if self.ref:
             txt += '{key}:\n{data}\n\n'.format(
                 key=PreviewItem.make_text_bold(
-                    'Reference (same for all claims)'),
+                    'Default reference (same for all claims)'),
                 data=PreviewItem.format_reference(self.ref))
         txt += '{key}:\n{data}\n\n'.format(
             key=PreviewItem.make_text_bold('Claims'),
             data=self.format_protoclaims())
         return txt
 
-    # @todo: T167663
     def format_protoclaims(self):
         """Create a preview table for the protoclaims."""
         table_head = (
@@ -74,7 +72,6 @@ class PreviewItem(object):
             "! Property\n"
             "! Value\n"
             "! Qualifiers\n"
-            #  "! References \n"  # re-add if multiple references
         )
         table_end = '|}'
         table_row = (
@@ -82,11 +79,10 @@ class PreviewItem(object):
             '| {prop} \n'
             '| {value} \n'
             '| {quals} \n'
-            # '| {references} \n'  # re-add if multiple references
         )
 
-        # start table construction
-        table = table_head
+        # format each table row
+        rows = []
         for prop, statements in self.protoclaims.items():
             if not statements:
                 continue
@@ -100,14 +96,35 @@ class PreviewItem(object):
                     else:
                         quals = [PreviewItem.format_qual(statement.quals[0])]
 
-                table += table_row.format(
-                    prop=prop,
-                    value=PreviewItem.format_itis(statement),
-                    quals=' \n'.join(quals),
-                    references=''  # self.ref  # re-add if multiple references
+                ref = ''
+                if statement.ref:
+                    ref = '\n{}'.format(
+                        PreviewItem.format_reference(statement.ref))
+
+                rows.append(
+                    {
+                        'prop': prop,
+                        'value': PreviewItem.format_itis(statement),
+                        'quals': ' \n'.join(quals),
+                        'references': ref
+                    }
                 )
 
+        # if any statement has a reference then add the reference column
+        if any(row.get('references') for row in rows):
+            default_ref = PreviewItem.make_text_italics('default reference')
+            table_head += '! References\n'
+            table_row += '| {references} \n'
+            if self.ref:
+                for row in rows:
+                    row['references'] = row['references'] or default_ref
+
+        # start table construction
+        table = table_head
+        for row in rows:
+            table += table_row.format(**row)
         table += table_end
+
         return table
 
     @staticmethod

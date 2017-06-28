@@ -201,21 +201,21 @@ class WfdBot(object):
             raise NotImplementedError(
                 'self.ref must be set by the class inheriting WfdBot')
 
-        for pc_prop, pc_value in protoclaims.items():
-            if pc_value:
-                if isinstance(pc_value, list):
-                    pc_value = set(pc_value)  # eliminate potential duplicates
-                    for val in pc_value:
-                        # check if None or a Statement(None)
-                        if (val is not None) and (not val.isNone()):
-                            self.wd.addNewClaim(
-                                pc_prop, val, item, self.ref)
-                            # reload item so that next call is aware of changes
-                            item = self.wd.QtoItemPage(item.title())
-                            item.exists()
-                elif not pc_value.isNone():
-                    self.wd.addNewClaim(
-                        pc_prop, pc_value, item, self.ref)
+        for prop, statements in protoclaims.items():
+            if statements:
+                statements = WdS.listify(statements)
+                statements = set(statements)  # eliminate potential duplicates
+                for statement in statements:
+                    # check if None or a Statement(None)
+                    if (statement is not None) and (not statement.isNone()):
+                        # use internal reference if present, else the general
+                        ref = statement.ref or self.ref
+                        self.wd.addNewClaim(
+                            prop, statement, item, ref)
+
+                        # reload item so that next call is aware of changes
+                        item = self.wd.QtoItemPage(item.title())
+                        item.exists()
 
     def make_ref(self, data):
         """Make a Reference object for the dataset.

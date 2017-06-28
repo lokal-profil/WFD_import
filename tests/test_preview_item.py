@@ -362,11 +362,11 @@ class TestFormatReference(BasicFormatMocker):
         self.claim_1 = pywikibot.Claim(self.repo, 'P123')
         self.claim_1.setTarget('1')
         self.claim_2 = pywikibot.Claim(self.repo, 'P123')
-        self.claim_1.setTarget('2')
+        self.claim_2.setTarget('2')
         self.claim_3 = pywikibot.Claim(self.repo, 'P123')
-        self.claim_1.setTarget('3')
+        self.claim_3.setTarget('3')
         self.claim_4 = pywikibot.Claim(self.repo, 'P123')
-        self.claim_1.setTarget('4')
+        self.claim_4.setTarget('4')
 
     def test_format_reference_basic(self):
         ref = WdS.Reference(
@@ -457,6 +457,13 @@ class TestFormatProtoclaims(TestPreviewItemBase):
                                              for i in range(1, 5)]
         self.addCleanup(qual_patcher.stop)
 
+        ref_patcher = mock.patch(
+            'WFD.PreviewItem.PreviewItem.format_reference')
+        self.mock_format_ref = ref_patcher.start()
+        self.mock_format_ref.side_effect = ['formatted_reference_{}'.format(i)
+                                            for i in range(1, 5)]
+        self.addCleanup(ref_patcher.stop)
+
     def test_format_protoclaims_no_protoclaims(self):
         self.preview_item.protoclaims = {}
         expected = (
@@ -471,6 +478,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
         self.mock_wd_template.assert_not_called()
         self.mock_format_itis.assert_not_called()
         self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_no_single_none_claim(self):
         self.preview_item.protoclaims = {'P123': None}
@@ -486,6 +494,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
         self.mock_wd_template.assert_not_called()
         self.mock_format_itis.assert_not_called()
         self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_single(self):
         itis = WdS.Statement('dummy')
@@ -506,6 +515,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
         self.mock_wd_template.assert_called_once_with('P123')
         self.mock_format_itis.assert_called_once_with(itis)
         self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_single_with_qual(self):
         itis = WdS.Statement('dummy')
@@ -528,6 +538,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
         self.mock_wd_template.assert_called_once_with('P123')
         self.mock_format_itis.assert_called_once_with(itis)
         self.mock_format_qual.assert_called_once_with(qual)
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_single_with_multiple_qual(self):
         itis = WdS.Statement('dummy')
@@ -557,6 +568,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
             mock.call(qual_2)],
             any_order=True
         )
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_multple_same_prop(self):
         itis_1 = WdS.Statement('foo')
@@ -585,6 +597,7 @@ class TestFormatProtoclaims(TestPreviewItemBase):
             mock.call(itis_2)
         ])
         self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_not_called()
 
     def test_format_protoclaims_multple_different_prop(self):
         itis_1 = WdS.Statement('foo')
@@ -620,6 +633,83 @@ class TestFormatProtoclaims(TestPreviewItemBase):
             any_order=True
         )
         self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_not_called()
+
+    def test_format_protoclaims_ref_adds_column(self):
+        claim_1 = pywikibot.Claim(self.repo, 'P123')
+        claim_1.setTarget('1')
+        ref_1 = WdS.Reference(claim_1)
+        itis_1 = WdS.Statement('foo')
+        itis_2 = WdS.Statement('bar').add_reference(ref_1)
+
+        self.preview_item.protoclaims = {'P123': [itis_1, itis_2]}
+        expected = (
+            "{| class='wikitable'\n"
+            "|-\n"
+            "! Property\n"
+            "! Value\n"
+            "! Qualifiers\n"
+            "! References\n"
+            '|-\n'
+            '| wd_template_1 \n'
+            '| formatted_itis_1 \n'
+            '|  \n'
+            '|  \n'
+            '|-\n'
+            '| wd_template_1 \n'
+            '| formatted_itis_2 \n'
+            '|  \n'
+            '| \nformatted_reference_1 \n'
+            "|}"
+        )
+        self.assertEqual(self.preview_item.format_protoclaims(), expected)
+        self.mock_wd_template.assert_called_once_with('P123')
+        self.mock_format_itis.assert_has_calls([
+            mock.call(itis_1),
+            mock.call(itis_2)
+        ])
+        self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_called_once_with(ref_1)
+
+    def test_format_protoclaims_ref_adds_column_set_default(self):
+        claim_1 = pywikibot.Claim(self.repo, 'P123')
+        claim_1.setTarget('1')
+        ref_1 = WdS.Reference(claim_1)
+        claim_2 = pywikibot.Claim(self.repo, 'P123')
+        claim_2.setTarget('2')
+        ref_2 = WdS.Reference(claim_2)
+        itis_1 = WdS.Statement('foo')
+        itis_2 = WdS.Statement('bar').add_reference(ref_1)
+
+        self.preview_item.ref = ref_2
+        self.preview_item.protoclaims = {'P123': [itis_1, itis_2]}
+        expected = (
+            "{| class='wikitable'\n"
+            "|-\n"
+            "! Property\n"
+            "! Value\n"
+            "! Qualifiers\n"
+            "! References\n"
+            '|-\n'
+            '| wd_template_1 \n'
+            '| formatted_itis_1 \n'
+            '|  \n'
+            '| italics_default reference \n'
+            '|-\n'
+            '| wd_template_1 \n'
+            '| formatted_itis_2 \n'
+            '|  \n'
+            '| \nformatted_reference_1 \n'
+            "|}"
+        )
+        self.assertEqual(self.preview_item.format_protoclaims(), expected)
+        self.mock_wd_template.assert_called_once_with('P123')
+        self.mock_format_itis.assert_has_calls([
+            mock.call(itis_1),
+            mock.call(itis_2)
+        ])
+        self.mock_format_qual.assert_not_called()
+        self.mock_format_ref.assert_called_once_with(ref_1)
 
 
 class TestMakePreviewPage(TestPreviewItemBase):
@@ -664,7 +754,8 @@ class TestMakePreviewPage(TestPreviewItemBase):
             'bold_Labels | Aliases:\nformatted_label\n\n'
             'bold_Descriptions:\nformatted_description\n\n'
             'bold_Matching item: formatted_item\n\n'
-            'bold_Reference (same for all claims):\nformatted_reference\n\n'
+            'bold_Default reference (same for all claims):\n'
+            'formatted_reference\n\n'
             'bold_Claims:\nformatted_protoclaim\n\n'
         )
         self.assertEqual(self.preview_item.make_preview_page(), expected)
@@ -672,7 +763,7 @@ class TestMakePreviewPage(TestPreviewItemBase):
             mock.call('Labels | Aliases'),
             mock.call('Descriptions'),
             mock.call('Matching item'),
-            mock.call('Reference (same for all claims)'),
+            mock.call('Default reference (same for all claims)'),
             mock.call('Claims')
         ])
         self.mock_format_label.assert_called_once()

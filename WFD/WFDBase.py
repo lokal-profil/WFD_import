@@ -162,8 +162,10 @@ class WfdBot(object):
 
         WfdBot.validate_mapping(
             self.mappings.get('languageCode'), langs, 'gml language codes')
-        WfdBot.validate_mapping(
-            self.mappings.get('units'), units, 'gml units')
+
+        # validate units
+        if any(helpers.get_unit_q(unit) is None for unit in units):
+            raise UnmappedValueError('gml units', units)
 
         self.gml_ref = self.make_ref(self.gml_data)
 

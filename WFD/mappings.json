@@ -69,7 +69,15 @@
         "2": "Q30092128",
         "3": "Q30092136",
         "4": "Q30092163",
-        "5": "Q30092172"
+        "5": "Q30092172",
+        "Unknown": "somevalue",
+        "Not applicable": null
+    },
+    "swChemicalStatusValue": {
+        "@meta": "https://www.wikidata.org/wiki/User:AndreCostaWMSE-bot/WFD/swChemicalStatusValue",
+        "2": "Q30899581",
+        "3": "Q30899434",
+        "U": "somevalue"
     },
     "descriptions": {
         "RBD": {

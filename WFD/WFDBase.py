@@ -205,7 +205,7 @@ class WfdBot(object):
 
         for prop, statements in protoclaims.items():
             if statements:
-                statements = WdS.listify(statements)
+                statements = helpers.listify(statements)
                 statements = set(statements)  # eliminate potential duplicates
                 for statement in statements:
                     # check if None or a Statement(None)

@@ -20,9 +20,9 @@ import pywikibot
 import wikidataStuff.helpers as helpers
 import wikidataStuff.WdqToWdqs as WdqToWdqs
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
+from wikidataStuff.PreviewItem import PreviewItem
 
 from WFD.WFDBase import parameter_help, WfdBot
-from WFD.PreviewItem import PreviewItem
 
 docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = 'importing #RBD using data from #WFD'

@@ -275,6 +275,8 @@ class WfdBot(object):
             descriptions[lang] = desc
         return descriptions
 
+    # Per http://cdr.eionet.europa.eu/help/WFD/WFD_521_2016/GISGuidance/WISE_GISGuidance.pdf
+    # feature_data['int_name'] is always in English
     def add_local_name(self, labels, code):
         """
         Add local names from gml data to label dict if gml is provided.
@@ -353,6 +355,7 @@ class WfdBot(object):
         data['retrieval_date'] = datetime.date.today().isoformat()
         return data
 
+    # @todo: Add option to dump the result to a file
     @staticmethod
     def load_data(in_file, key=None):
         """

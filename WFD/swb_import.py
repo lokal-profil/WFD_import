@@ -18,6 +18,7 @@ import pywikibot
 
 import wikidataStuff.helpers as helpers
 from wikidataStuff.WikidataStuff import WikidataStuff as WdS
+from wikidataStuff.PreviewItem import PreviewItem
 
 from WFD.WFDBase import (
     parameter_help,
@@ -25,7 +26,6 @@ from WFD.WFDBase import (
     UnexpectedValueError,
     WfdBot
 )
-from WFD.PreviewItem import PreviewItem
 
 docuReplacements = {'&params;': parameter_help}
 EDIT_SUMMARY = 'importing #SWB using data from #WFD'

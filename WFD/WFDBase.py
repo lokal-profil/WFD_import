@@ -275,7 +275,7 @@ class WfdBot(object):
             descriptions[lang] = desc
         return descriptions
 
-    # Per http://cdr.eionet.europa.eu/help/WFD/WFD_521_2016/GISGuidance/WISE_GISGuidance.pdf
+    # Per http://cdr.eionet.europa.eu/help/WFD/WFD_521_2016/GISGuidance/WISE_GISGuidance.pdf  # noqa
     # feature_data['int_name'] is always in English
     def add_local_name(self, labels, code):
         """

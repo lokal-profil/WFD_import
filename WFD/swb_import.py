@@ -271,7 +271,7 @@ class SwbBot(WfdBot):
         :return: Statement
         """
         return self.make_status_claim(
-            self, data, 'swEcologicalStatusOrPotentialValue')
+            data, 'swEcologicalStatusOrPotentialValue')
 
     def make_general_chemical_status(self, data):
         """
@@ -288,7 +288,7 @@ class SwbBot(WfdBot):
         :param data: dict of data for a single SWB
         :return: Statement
         """
-        return self.make_status_claim(self, data, 'swChemicalStatusValue')
+        return self.make_status_claim(data, 'swChemicalStatusValue')
 
     def make_status_claim(self, data, label):
         """

@@ -196,6 +196,9 @@ class SwbBot(WfdBot):
         # P4002: swEcologicalStatusOrPotentialValue
         protoclaims['P4002'] = self.make_general_ecological_status(data)
 
+        # ?: swChemicalStatusValue
+        protoclaims['P4202'] = self.make_general_chemical_status(data)
+
         # P2046: wfdgml:sizeValue + wfdgml:sizeUom
         if self.gml_data:
             feature_data = self.gml_data['features'].get(
@@ -267,19 +270,50 @@ class SwbBot(WfdBot):
         :param data: dict of data for a single SWB
         :return: Statement
         """
+        return self.make_status_claim(
+            data, 'swEcologicalStatusOrPotentialValue')
+
+    def make_general_chemical_status(self, data):
+        """
+        Construct statements for swChemicalStatusValue data.
+
+        Uses self.wbtime_year as timepoint (for the year the status was
+        decided).
+
+        swChemicalAssesmentYear gives the year, or range for which the
+        data was collected/assesments made.
+
+        Sets the 'somevalue' statement if the status is "U".
+
+        :param data: dict of data for a single SWB
+        :return: Statement
+        """
+        return self.make_status_claim(data, 'swChemicalStatusValue')
+
+    def make_status_claim(self, data, label):
+        """
+        Construct statements for mapped data.
+
+        Uses self.wbtime_year as timepoint (for the year the status was
+        decided).
+
+        :param data: dict of data for a single SWB
+        :param label: the xml label for the status
+        :return: Statement
+        """
         claim = None
-        mapping = self.mappings.get('swEcologicalStatusOrPotentialValue')
-        raw_val = data.get('swEcologicalStatusOrPotentialValue')
+        mapping = self.mappings.get(label)
+        raw_val = data.get(label)
         mapped_val = mapping.get(raw_val)
         if mapped_val:
-            claim = WdS.Statement(self.wd.QtoItemPage(mapped_val))
-        elif raw_val == 'Unknown':
-            claim = WdS.Statement('somevalue', special=True)
-        elif raw_val == 'Not applicable':
+            if mapped_val.startswith('Q'):
+                claim = WdS.Statement(self.wd.QtoItemPage(mapped_val))
+            else:  # somevalue
+                claim = WdS.Statement(mapped_val, special=True)
+        elif raw_val in mapping.keys():  # mapped but set to None
             return
         else:
-            raise UnexpectedValueError(
-                'swEcologicalStatusOrPotentialValue', raw_val)
+            raise UnexpectedValueError(label, raw_val)
 
         if claim:
             claim.addQualifier(WdS.Qualifier('P585', self.wbtime_year))
@@ -327,9 +361,13 @@ def validate_indata(data, mappings):
         len(data.get('SurfaceWaterBody'))))
     swb_cats = set()
     impacts = set()
+    ecological = set()
+    chemical = set()
     for swb in data.get('SurfaceWaterBody'):
         swb_cats.add(swb.get('surfaceWaterBodyCategory'))
         impacts |= set(helpers.listify(swb.get('swSignificantImpactType')))
+        ecological.add(swb.get('swEcologicalStatusOrPotentialValue'))
+        chemical.add(swb.get('swChemicalStatusValue'))
     impacts = [impact.split(' - ')[0] for impact in impacts]
 
     WfdBot.validate_mapping(
@@ -338,6 +376,12 @@ def validate_indata(data, mappings):
     WfdBot.validate_mapping(
         mappings.get('swSignificantImpactType'), impacts,
         'swSignificantImpactType')
+    WfdBot.validate_mapping(
+        mappings.get('swEcologicalStatusOrPotentialValue'), ecological,
+        'swEcologicalStatusOrPotentialValue')
+    WfdBot.validate_mapping(
+        mappings.get('swChemicalStatusValue'), chemical,
+        'swChemicalStatusValue')
 
     pywikibot.output('Validation successful')
 

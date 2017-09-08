@@ -311,8 +311,8 @@ class WfdBot(object):
         :param summary: to use for the edit
         :return: pywikibot.ItemPage
         """
-        labels = WfdBot.convert_language_dict_to_json(labels, typ='labels')
-        desc = WfdBot.convert_language_dict_to_json(desc, typ='descriptions')
+        labels = helpers.convert_language_dict_to_json(labels, typ='labels')
+        desc = helpers.convert_language_dict_to_json(desc, typ='descriptions')
 
         item_data = {
             "labels": labels,
@@ -489,33 +489,3 @@ class WfdBot(object):
             raise pywikibot.Error('An in_file must be specified')
 
         return options
-
-    # @todo: T167661 Move to WikidataStuff.helpers?
-    @staticmethod
-    def convert_language_dict_to_json(data, typ):
-        """
-        Convert a description/label/alias dictionary to input formatted json.
-
-        The json format is needed during e.g. item creation.
-
-        :param data: a language-value dictionary where value is either a string
-            or list of strings.
-        :param typ: the type of output. Must be one of descriptions, labels or
-            aliases
-        :return: dict
-        """
-        if typ not in ('descriptions', 'labels', 'aliases'):
-            raise ValueError('"{0}" is not a valid type for '
-                             'convert_language_dict_to_json().'.format(typ))
-        allow_list = (typ == 'aliases')
-
-        json_data = dict()
-        for lang, val in data.items():
-            if not allow_list and isinstance(val, list):
-                if len(val) == 1:
-                    val = val[0]
-                else:
-                    raise ValueError('{0} must not have a list of values for '
-                                     'a single language.'.format(typ))
-            json_data[lang] = {'language': lang, 'value': val}
-        return json_data

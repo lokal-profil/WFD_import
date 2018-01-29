@@ -187,8 +187,8 @@ class SwbBot(WfdBot):
         # P17: country
         protoclaims['P17'] = WdS.Statement(self.country)
 
-        # P361: parent RBD
-        protoclaims['P361'] = WdS.Statement(self.rbd)
+        # P4614: watershed/parent RBD
+        protoclaims['P4614'] = WdS.Statement(self.rbd)
 
         # P3643: swSignificantImpactType
         protoclaims['P3643'] = self.make_significant_impact_type(data)
